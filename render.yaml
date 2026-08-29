@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: math-to-latex-studio
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GEMINI_API_KEY
+        sync: false

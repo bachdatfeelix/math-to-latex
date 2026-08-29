@@ -1,0 +1,344 @@
+/* ==========================================================================
+   Math2LaTeX Studio - Vanguard High-End Visual Design & Micro-Interactions
+   ========================================================================== */
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-math: 'STIX Two Text', 'Cambria Math', Times, serif;
+  
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #07090e;
+  color: #f1f5f9;
+  overflow-x: hidden;
+}
+
+/* Ambient Radial Glow */
+.ambient-glow {
+  position: absolute;
+  pointer-events: none;
+  filter: blur(140px);
+  will-change: transform;
+}
+
+.grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+}
+
+/* ==========================================================================
+   Double-Bezel Nested Architecture (Machined Hardware Aesthetic)
+   ========================================================================== */
+.double-bezel-shell {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 24px 48px -12px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.double-bezel-core {
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   Segmented Controls & Navigation Pills
+   ========================================================================== */
+.engine-pill {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s var(--ease-spring);
+}
+
+.engine-pill.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.tab-pill {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s var(--ease-spring);
+}
+
+.tab-pill.active {
+  background: #1e1b4b;
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+/* ==========================================================================
+   Mathematical Fast Tool Pills
+   ========================================================================== */
+.math-tool-pill {
+  background: #111422;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #cbd5e1;
+  padding: 4px 9px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s var(--ease-spring);
+}
+
+.math-tool-pill:hover {
+  background: #232742;
+  border-color: #6366f1;
+  color: #ffffff;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+}
+
+.math-tool-pill:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   Hero Convert Button & Shimmer Sweep
+   ========================================================================== */
+.cta-convert-btn {
+  background-size: 200% 200%;
+}
+
+.cta-convert-btn:hover {
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: shimmerSweep 3.5s infinite;
+}
+
+@keyframes shimmerSweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ==========================================================================
+   Code Editor Aesthetics
+   ========================================================================== */
+#latexEditor {
+  font-family: var(--font-mono);
+  line-height: 1.65;
+  tab-size: 2;
+  color: #c7d2fe;
+}
+
+#latexEditor::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   KaTeX Rendered Preview Document (Pristine Exam Paper Layout)
+   ========================================================================== */
+#previewViewContainer {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+#renderOutput {
+  font-family: var(--font-math);
+  font-size: 16.5px;
+  line-height: 1.8;
+  color: #1e293b;
+}
+
+#renderOutput h2 {
+  font-family: var(--font-sans);
+  color: #312e81;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e0e7ff;
+}
+
+#renderOutput h3 {
+  font-family: var(--font-sans);
+  color: #3730a3;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+#renderOutput p {
+  margin-bottom: 0.85rem;
+}
+
+/* Math Question Card Styling inside render */
+#renderOutput .question-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #4f46e5;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 14px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+#renderOutput .choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+#renderOutput .choice-item {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#renderOutput .katex-display {
+  margin: 1.2em 0;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ==========================================================================
+   Interactive Micro-Animations
+   ========================================================================== */
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.22s var(--ease-spring) forwards;
+}
+
+/* Drag over highlight */
+#dropZone.drag-over {
+  border-color: #818cf8 !important;
+  background-color: rgba(99, 102, 241, 0.12) !important;
+  transform: scale(1.01);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 13, 22, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+.toast {
+  pointer-events: auto;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 
+    0 20px 35px -10px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: scaleUp 0.25s var(--ease-spring);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.toast-success {
+  background: #064e3b;
+  color: #a7f3d0;
+  border: 1px solid #059669;
+}
+
+.toast-error {
+  background: #7f1d1d;
+  color: #fecaca;
+  border: 1px solid #dc2626;
+}
+
+.toast-info {
+  background: #1e1b4b;
+  color: #c7d2fe;
+  border: 1px solid #4f46e5;
+}
+
+/* ==========================================================================
+   Print Styles for PDF Export
+   ========================================================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, #dropZone, #imageToolsBar, .sample-btn, #workspaceArea > div:first-child, .tab-pill, .math-tool-pill, #toastContainer, #settingsModal, #guideModal, .ambient-glow, .grid-pattern {
+    display: none !important;
+  }
+  #previewViewContainer {
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  #renderOutput {
+    padding: 0 !important;
+    font-size: 14pt;
+    color: #000000 !important;
+  }
+}

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math2LaTeX Studio — Trình Chuyển Đổi Ảnh Đề Toán Sang LaTeX Chuẩn</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.85em' font-size='85'>📐</text></svg>">
+  
+  <!-- Premium Fonts: Plus Jakarta Sans, JetBrains Mono, STIX Two Math -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Lucide & FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Cropper.js for image cropping -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  
+  <!-- KaTeX for ultra-fast and crisp mathematical rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Tesseract.js for 100% Offline In-Browser OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <!-- Tailwind CSS CDN for modern utility classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            math: ['"STIX Two Text"', 'serif']
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+              950: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom High-End Agency Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#07090e] text-slate-100 min-h-[100dvh] flex flex-col antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+  
+  <!-- Background Radiant Ambient Lighting -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="ambient-glow -top-40 left-1/4 w-[650px] h-[550px] bg-indigo-600/15 rounded-full blur-[140px]"></div>
+    <div class="ambient-glow top-1/3 -right-40 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[160px]"></div>
+    <div class="ambient-glow -bottom-32 left-1/3 w-[700px] h-[450px] bg-blue-600/10 rounded-full blur-[150px]"></div>
+    <div class="grid-pattern absolute inset-0 opacity-[0.035]"></div>
+  </div>
+
+  <!-- Top Glass Floating Header -->
+  <header class="relative z-30 sticky top-0 px-4 lg:px-8 py-3.5 backdrop-blur-2xl bg-[#090b12]/80 border-b border-white/[0.06] transition-all">
+    <div class="max-w-[1800px] mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3.5">
+        <div class="relative group">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-1 ring-white/20 group-hover:scale-105 transition-transform duration-300">
+            <i class="fa-solid fa-square-root-variable text-white text-lg"></i>
+          </div>
+          <div class="absolute -inset-1 rounded-2xl bg-indigo-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+              Math2LaTeX
+            </span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border border-indigo-500/30">
+              PRO STUDIO
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium hidden sm:block">Chuyển Đổi Ảnh Đề Thi Toán Sang Mã LaTeX Chuẩn 100%</p>
+        </div>
+      </div>
+
+      <!-- Center Engine Selector Segmented Control -->
+      <div class="hidden md:flex items-center bg-[#10131d]/90 p-1.5 rounded-2xl border border-white/[0.08] shadow-inner gap-1">
+        <button id="engineGeminiBtn" class="engine-pill active flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all">
+          <i class="fa-solid fa-sparkles text-amber-300"></i>
+          <span>Gemini 2.0 AI</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">Khuyên dùng</span>
+        </button>
+        <button id="engineTesseractBtn" class="engine-pill flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+          <span>Offline Local (Không cần API)</span>
+        </button>
+        <button id="engineOllamaBtn" class="engine-pill flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-microchip text-cyan-400"></i>
+          <span>Ollama / Custom</span>
+        </button>
+      </div>
+
+      <!-- Right Actions Toolbar -->
+      <div class="flex items-center gap-2.5">
+        
+        <!-- Output Format Type Dropdown -->
+        <div class="hidden sm:flex items-center bg-[#10131d]/90 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-slate-300 gap-2 focus-within:border-indigo-500/60 transition">
+          <i class="fa-regular fa-file-code text-indigo-400"></i>
+          <span class="text-slate-400 font-medium">Xuất:</span>
+          <select id="docTypeSelect" class="bg-transparent text-indigo-300 font-semibold outline-none cursor-pointer pr-1">
+            <option value="full" class="bg-[#0f121d] text-slate-200">Tài liệu đầy đủ (.tex)</option>
+            <option value="snippet" class="bg-[#0f121d] text-slate-200">Chỉ đoạn mã (Snippet)</option>
+          </select>
+        </div>
+
+        <!-- API Settings Trigger -->
+        <button id="openSettingsBtn" class="h-9 px-3 rounded-xl bg-[#131622] hover:bg-[#1c2030] border border-white/[0.08] hover:border-indigo-500/40 text-slate-300 hover:text-white font-medium text-xs flex items-center gap-2 transition-all shadow-sm">
+          <i class="fa-solid fa-sliders text-indigo-400"></i>
+          <span class="hidden sm:inline">Cấu hình API</span>
+          <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-amber-400 ring-2 ring-amber-400/20" title="Chưa nhập API Key"></span>
+        </button>
+
+        <!-- User Guide Trigger -->
+        <button id="openGuideBtn" title="Hướng dẫn sử dụng" class="w-9 h-9 rounded-xl bg-[#131622] hover:bg-[#1c2030] border border-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all">
+          <i class="fa-solid fa-circle-question text-sm"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Studio Workspace -->
+  <main class="relative z-10 flex-1 p-3 sm:p-5 lg:p-6 max-w-[1800px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- LEFT PANEL: OPTICAL INPUT & IMAGE PROCESSING (5 Columns) -->
+    <div class="lg:col-span-5 flex flex-col gap-4">
+      
+      <!-- Machined Double-Bezel Card Outer Shell -->
+      <div class="double-bezel-shell rounded-[24px] p-2 bg-gradient-to-b from-white/[0.09] via-white/[0.03] to-transparent border border-white/[0.08] shadow-2xl backdrop-blur-xl">
+        <div class="double-bezel-core rounded-[18px] bg-[#0c0e17]/95 p-4 sm:p-5 flex flex-col gap-4 border border-white/[0.04]">
+          
+          <!-- Card Header -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center border border-indigo-500/30">1</div>
+              <h2 class="text-sm font-bold text-slate-100 tracking-tight">Nạp Ảnh Đề Toán</h2>
+            </div>
+            <div class="flex items-center gap-1 text-[11px] text-slate-400 bg-[#131724] px-2.5 py-1 rounded-lg border border-white/[0.06]">
+              <i class="fa-solid fa-paste text-indigo-400 mr-1"></i> Dán nhanh <kbd class="font-mono text-indigo-300 font-bold">Ctrl+V</kbd>
+            </div>
+          </div>
+
+          <!-- Futuristic Drop Zone & Interactive Canvas -->
+          <div id="dropZone" class="relative group border-2 border-dashed border-slate-700/80 hover:border-indigo-500/80 bg-[#070910]/80 hover:bg-indigo-950/20 rounded-2xl p-6 transition-all duration-300 text-center cursor-pointer flex flex-col items-center justify-center min-h-[240px] overflow-hidden">
+            <input type="file" id="fileInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+            
+            <!-- Upload Prompt -->
+            <div id="uploadPrompt" class="flex flex-col items-center gap-3 pointer-events-none z-10">
+              <div class="relative">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600/30 to-purple-600/30 border border-indigo-500/30 flex items-center justify-center text-indigo-300 group-hover:scale-110 group-hover:border-indigo-400/60 transition-all duration-300 shadow-lg shadow-indigo-500/10">
+                  <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                </div>
+                <div class="absolute -inset-2 bg-indigo-500/20 rounded-3xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+              <div class="space-y-1">
+                <p class="text-sm font-bold text-slate-200">Kéo & thả ảnh đề thi vào đây, hoặc <span class="text-indigo-400 underline decoration-indigo-400/40 underline-offset-4 group-hover:text-indigo-300">chọn tệp</span></p>
+                <p class="text-xs text-slate-400">Hỗ trợ PNG, JPG, JPEG, WEBP, ảnh chụp màn hình Snipping Tool</p>
+              </div>
+            </div>
+
+            <!-- Image Loaded Preview Container -->
+            <div id="imagePreviewContainer" class="hidden w-full flex flex-col items-center gap-3 z-10">
+              <div class="relative w-full max-h-[380px] overflow-hidden rounded-xl bg-black/60 flex items-center justify-center border border-white/[0.08] shadow-inner">
+                <img id="previewImg" src="" alt="Ảnh đề toán đã tải" class="max-h-[360px] max-w-full object-contain">
+              </div>
+            </div>
+
+            <!-- Holographic Corner Brackets -->
+            <div class="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-indigo-500/40 rounded-tl pointer-events-none"></div>
+            <div class="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-indigo-500/40 rounded-tr pointer-events-none"></div>
+            <div class="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-indigo-500/40 rounded-bl pointer-events-none"></div>
+            <div class="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-indigo-500/40 rounded-br pointer-events-none"></div>
+          </div>
+
+          <!-- Image Tools Bar (Crop / Rotate / Clear) -->
+          <div id="imageToolsBar" class="hidden flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-[#111422] border border-white/[0.06] text-xs animate-scaleUp">
+            <div class="flex items-center gap-1.5">
+              <button id="cropToggleBtn" class="px-3 py-1.5 rounded-lg bg-[#1a1f33] hover:bg-indigo-600 hover:text-white text-slate-200 border border-white/[0.08] font-medium transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-crop-simple text-indigo-400"></i> Cắt vùng chọn
+              </button>
+              <button id="cropApplyBtn" class="hidden px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/30">
+                <i class="fa-solid fa-check"></i> Xác nhận cắt
+              </button>
+              <button id="cropCancelBtn" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium transition">
+                Hủy
+              </button>
+              <button id="rotateBtn" title="Xoay ảnh 90°" class="p-2 rounded-lg bg-[#1a1f33] hover:bg-[#252b45] text-slate-300 border border-white/[0.08] transition">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </div>
+            <button id="clearImageBtn" class="px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 font-medium transition flex items-center gap-1">
+              <i class="fa-regular fa-trash-can"></i> Xóa ảnh
+            </button>
+          </div>
+
+          <!-- Quick Test Math Presets -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-slate-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-flask-vial text-indigo-400"></i> Thử nghiệm nhanh với đề mẫu:
+              </span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button class="sample-btn p-2.5 rounded-xl bg-[#111422] hover:bg-[#1b2035] border border-white/[0.06] hover:border-indigo-500/40 text-left transition-all duration-200 group flex flex-col gap-0.5" data-sample="trac-nghiem">
+                <span class="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">Trắc nghiệm</span>
+                <span class="text-[10px] text-slate-400">Đề THPT 4 đáp án</span>
+              </button>
+              <button class="sample-btn p-2.5 rounded-xl bg-[#111422] hover:bg-[#1b2035] border border-white/[0.06] hover:border-indigo-500/40 text-left transition-all duration-200 group flex flex-col gap-0.5" data-sample="tich-phan">
+                <span class="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">Tích phân & ĐH</span>
+                <span class="text-[10px] text-slate-400">Biểu thức đa cấp</span>
+              </button>
+              <button class="sample-btn p-2.5 rounded-xl bg-[#111422] hover:bg-[#1b2035] border border-white/[0.06] hover:border-indigo-500/40 text-left transition-all duration-200 group flex flex-col gap-0.5" data-sample="he-phuong-trinh">
+                <span class="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">Hệ PT & Căn</span>
+                <span class="text-[10px] text-slate-400">Cases & Ma trận</span>
+              </button>
+              <button class="sample-btn p-2.5 rounded-xl bg-[#111422] hover:bg-[#1b2035] border border-white/[0.06] hover:border-indigo-500/40 text-left transition-all duration-200 group flex flex-col gap-0.5" data-sample="hinh-hoc">
+                <span class="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">Hình học Oxyz</span>
+                <span class="text-[10px] text-slate-400">Vector, Mặt phẳng</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Prompt Customization Notes -->
+          <div class="space-y-1.5">
+            <label for="customNotes" class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles text-slate-400"></i> Ghi chú AI (Tùy chọn):</span>
+              <span class="text-[10px] text-slate-500 font-normal">VD: Thêm lời giải chi tiết, vẽ TikZ...</span>
+            </label>
+            <input type="text" id="customNotes" placeholder="Ví dụ: Chỉ nhận diện câu 2; hoặc chuyển phân số sang dạng dfrac..." class="w-full bg-[#080a12] border border-white/[0.08] focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition">
+          </div>
+
+          <!-- HERO CONVERT ACTION BUTTON -->
+          <button id="convertBtn" class="cta-convert-btn relative group w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-between overflow-hidden cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+            <div class="flex items-center gap-2.5">
+              <i class="fa-solid fa-bolt-lightning text-amber-300 group-hover:rotate-12 transition-transform"></i>
+              <span id="convertBtnText">Chuyển Đổi Thành LaTeX Ngay</span>
+            </div>
+            <div class="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+              <i id="convertBtnIcon" class="fa-solid fa-arrow-right text-xs text-white"></i>
+              <span id="convertSpinner" class="hidden animate-spin text-xs"><i class="fa-solid fa-spinner"></i></span>
+            </div>
+            <!-- Shimmer Light sweep effect -->
+            <div class="shimmer-effect absolute inset-0 pointer-events-none"></div>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Feature Badges Card -->
+      <div class="rounded-2xl p-4 bg-[#0c0e17]/80 border border-white/[0.06] text-xs text-slate-400 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between text-slate-200 font-bold">
+          <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-indigo-400"></i> Tiêu chuẩn chất lượng cao:</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-[11.5px] text-slate-400">
+          <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> Tự động phân số \dfrac</div>
+          <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> Chuẩn Overleaf / TeXmaker</div>
+          <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> Đề trắc nghiệm A, B, C, D</div>
+          <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> Hỗ trợ tiếng Việt Unicode</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: LATEX CODE EDITOR & LIVE MATH RENDER (7 Columns) -->
+    <div class="lg:col-span-7 flex flex-col gap-4">
+      
+      <!-- Studio Outer Shell -->
+      <div class="double-bezel-shell rounded-[24px] p-2 bg-gradient-to-b from-white/[0.09] via-white/[0.03] to-transparent border border-white/[0.08] shadow-2xl backdrop-blur-xl flex flex-col flex-1 min-h-[660px]">
+        <div class="double-bezel-core rounded-[18px] bg-[#0c0e17]/95 p-4 sm:p-5 flex flex-col flex-1 gap-3 border border-white/[0.04]">
+          
+          <!-- Top View Controller & Action Deck -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+            
+            <!-- Left: View Mode Segmented Control -->
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center border border-purple-500/30">2</div>
+              <div class="flex items-center bg-[#10131e] p-1 rounded-xl border border-white/[0.06] gap-1 text-xs">
+                <button id="tabCodeBtn" class="tab-pill active px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all">
+                  <i class="fa-solid fa-code text-indigo-400"></i> Mã LaTeX (.tex)
+                </button>
+                <button id="tabPreviewBtn" class="tab-pill px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition-all">
+                  <i class="fa-solid fa-eye text-emerald-400"></i> Bản Xem Trước
+                </button>
+                <button id="tabSplitBtn" class="tab-pill hidden sm:flex px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 items-center gap-1.5 transition-all">
+                  <i class="fa-solid fa-table-columns text-cyan-400"></i> Song Song (Split)
+                </button>
+              </div>
+            </div>
+
+            <!-- Right: Export & Copy Actions -->
+            <div class="flex items-center gap-2">
+              <button id="copyLatexBtn" class="px-3 py-1.5 rounded-xl bg-[#141828] hover:bg-[#1e243d] border border-white/[0.08] hover:border-indigo-500/40 text-slate-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 transition-all active:scale-[0.98]">
+                <i class="fa-regular fa-copy text-indigo-400"></i>
+                <span id="copyBtnText">Sao chép</span>
+              </button>
+              <button id="downloadTexBtn" class="px-3.5 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm shadow-emerald-500/10 active:scale-[0.98]">
+                <i class="fa-solid fa-download text-emerald-400"></i>
+                <span>Tải .tex</span>
+              </button>
+              <button id="openOverleafBtn" title="Mở trực tiếp trên Overleaf" class="px-3 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600/30 border border-teal-500/40 text-teal-300 hover:text-teal-200 font-semibold text-xs flex items-center gap-1.5 transition-all active:scale-[0.98]">
+                <i class="fa-solid fa-arrow-up-right-from-square text-teal-400"></i>
+                <span class="hidden sm:inline">Overleaf</span>
+              </button>
+              <button id="clearCodeBtn" title="Xóa toàn bộ mã" class="p-1.5 px-2 rounded-xl bg-[#141828] hover:bg-rose-950/40 border border-white/[0.08] hover:border-rose-500/40 text-slate-400 hover:text-rose-300 text-xs transition">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Mathematical Fast Symbol Toolbar -->
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 border-b border-white/[0.04]">
+            <span class="text-[11px] text-slate-500 font-bold uppercase tracking-wider pl-1 pr-1 flex items-center gap-1 whitespace-nowrap">
+              <i class="fa-solid fa-plus text-[10px]"></i> Chèn nhanh:
+            </span>
+            <button class="math-tool-pill" data-latex="\dfrac{a}{b}" title="Phân số lớn">\dfrac{a}{b}</button>
+            <button class="math-tool-pill" data-latex="\sqrt{x}" title="Căn bậc hai">\sqrt{x}</button>
+            <button class="math-tool-pill" data-latex="\int_{a}^{b} f(x)dx" title="Tích phân">\int_{a}^{b}</button>
+            <button class="math-tool-pill" data-latex="\lim_{x \to x_0}" title="Giới hạn">\lim_{x \to 0}</button>
+            <button class="math-tool-pill" data-latex="\sum_{i=1}^{n}" title="Tổng xích-ma">\sum</button>
+            <button class="math-tool-pill" data-latex="\begin{cases} x + y = 1 \\ 2x - y = 3 \end{cases}" title="Hệ phương trình">\begin{cases}</button>
+            <button class="math-tool-pill" data-latex="\vec{a}" title="Vector">\vec{a}</button>
+            <button class="math-tool-pill" data-latex="\mathbb{R}" title="Tập số thực">\mathbb{R}</button>
+            <button class="math-tool-pill" data-latex="\alpha, \beta, \Delta" title="Ký tự Hy Lạp">\alpha, \beta, \Delta</button>
+            <button class="math-tool-pill" data-latex="\le, \ge, \ne, \approx" title="Dấu so sánh">\le, \ge, \ne</button>
+            <button class="math-tool-pill" data-latex="\in, \subset, \cup, \cap, \emptyset" title="Tập hợp">\in, \cup, \cap</button>
+            <button class="math-tool-pill" data-latex="\Leftrightarrow" title="Tương đương">\Leftrightarrow</button>
+          </div>
+
+          <!-- Dual Workspace Canvas (Editor / Preview / Split) -->
+          <div id="workspaceArea" class="flex-1 grid grid-cols-1 gap-3 min-h-[480px]">
+            
+            <!-- Code Editor Box -->
+            <div id="codeViewContainer" class="flex flex-col h-full rounded-2xl overflow-hidden border border-white/[0.08] bg-[#070910] shadow-inner">
+              <div class="bg-[#0e111d] px-4 py-2 border-b border-white/[0.06] flex items-center justify-between text-xs text-slate-400">
+                <span class="font-mono flex items-center gap-2 text-indigo-300 font-semibold">
+                  <i class="fa-solid fa-file-lines text-indigo-400"></i> de_toan.tex
+                </span>
+                <span id="charCount" class="font-mono text-[11px] text-slate-400">0 ký tự | 0 dòng</span>
+              </div>
+              <textarea id="latexEditor" spellcheck="false" placeholder="% Kết quả mã LaTeX sẽ tự động xuất hiện ở đây sau khi bạn nạp ảnh và nhấn 'Chuyển Đổi'&#10;% Bạn có thể tự do chỉnh sửa, gõ thêm công thức hoặc sao chép mã..." class="w-full flex-1 p-4 bg-transparent text-indigo-100 font-mono text-xs sm:text-[13px] leading-relaxed resize-none focus:outline-none placeholder-slate-600 select-text"></textarea>
+            </div>
+
+            <!-- Visual KaTeX Math Render Box -->
+            <div id="previewViewContainer" class="hidden flex-col h-full rounded-2xl overflow-hidden border border-white/[0.08] bg-[#ffffff] text-slate-900 shadow-xl">
+              <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs text-slate-700">
+                <span class="font-bold flex items-center gap-2 text-indigo-900">
+                  <i class="fa-solid fa-book-open-reader text-indigo-600"></i> Bản Đề Thi Đã Định Dạng Chuẩn
+                </span>
+                <div class="flex items-center gap-1.5">
+                  <button id="zoomInBtn" title="Phóng to font chữ" class="w-7 h-7 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 flex items-center justify-center transition"><i class="fa-solid fa-magnifying-glass-plus text-xs"></i></button>
+                  <button id="zoomOutBtn" title="Thu nhỏ font chữ" class="w-7 h-7 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 flex items-center justify-center transition"><i class="fa-solid fa-magnifying-glass-minus text-xs"></i></button>
+                  <button id="printPreviewBtn" title="In hoặc xuất PDF" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-print"></i> In PDF
+                  </button>
+                </div>
+              </div>
+              <div id="renderOutput" class="flex-1 p-6 overflow-y-auto font-serif text-slate-900 text-base leading-relaxed select-text min-h-[400px]">
+                <div class="text-slate-400 text-center italic mt-16 flex flex-col items-center gap-2">
+                  <i class="fa-solid fa-file-circle-question text-3xl text-slate-300"></i>
+                  <span>Chưa có nội dung hiển thị. Hãy chuyển đổi ảnh hoặc nhập mã LaTeX ở khung soạn thảo.</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- High-End Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="double-bezel-shell rounded-[28px] p-2 bg-gradient-to-b from-white/[0.12] via-white/[0.04] to-transparent border border-white/[0.1] shadow-2xl max-w-lg w-full animate-scaleUp">
+      <div class="double-bezel-core rounded-[22px] bg-[#0d0f1a] p-6 flex flex-col gap-5 border border-white/[0.06]">
+        
+        <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+              <i class="fa-solid fa-sliders text-base"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-100">Cấu Hình Nhận Diện & API</h3>
+              <p class="text-xs text-slate-400">Tùy chỉnh khóa API & Endpoint OCR</p>
+            </div>
+          </div>
+          <button id="closeSettingsBtn" class="w-8 h-8 rounded-lg bg-[#141724] text-slate-400 hover:text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          
+          <!-- Gemini API Key & Model -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="geminiApiKeyInput" class="font-bold text-slate-200 flex items-center gap-1.5">
+                <i class="fa-brands fa-google text-amber-400"></i> Google Gemini API Key (Miễn phí 100%):
+              </label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-semibold underline decoration-indigo-400/40 underline-offset-2 flex items-center gap-1">
+                Lấy Key Miễn Phí <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+              </a>
+            </div>
+            <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." class="w-full bg-[#070912] border border-white/[0.1] focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-slate-200 font-mono focus:outline-none transition">
+            
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <label for="geminiModelSelect" class="text-slate-400 font-medium">Model Vision:</label>
+              <select id="geminiModelSelect" class="bg-[#070912] border border-white/[0.1] focus:border-indigo-500 rounded-lg px-2.5 py-1.5 text-indigo-300 font-mono text-xs outline-none cursor-pointer">
+                <option value="gemini-3.7-flash" selected>gemini-3.7-flash (Mới nhất & Thông minh nhất - Khuyên dùng)</option>
+                <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro (Độ chính xác cao nhất)</option>
+              </select>
+            </div>
+            <p class="text-[11px] text-slate-400">Khóa API được lưu an toàn trong trình duyệt của bạn (LocalStorage) và không gửi tới bất kỳ bên thứ ba nào.</p>
+          </div>
+
+          <!-- Ollama Local Endpoint -->
+          <div class="space-y-1.5 border-t border-white/[0.06] pt-3">
+            <label for="ollamaUrlInput" class="font-bold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-microchip text-cyan-400"></i> Ollama Local Endpoint:
+            </label>
+            <input type="text" id="ollamaUrlInput" value="http://localhost:11434" class="w-full bg-[#070912] border border-white/[0.1] focus:border-cyan-500 rounded-xl px-3.5 py-2.5 text-slate-200 font-mono focus:outline-none transition">
+            <div class="flex items-center gap-2 mt-1">
+              <label for="ollamaModelInput" class="text-slate-400">Tên Model Vision:</label>
+              <input type="text" id="ollamaModelInput" value="llava" class="flex-1 bg-[#070912] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-slate-200 font-mono text-xs">
+            </div>
+          </div>
+
+          <!-- Custom OpenAI Endpoint -->
+          <div class="space-y-1.5 border-t border-white/[0.06] pt-3">
+            <label for="customApiUrlInput" class="font-bold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-plug text-emerald-400"></i> Custom OpenAI/DeepSeek API:
+            </label>
+            <input type="text" id="customApiUrlInput" placeholder="https://api.openai.com/v1/chat/completions" class="w-full bg-[#070912] border border-white/[0.1] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 font-mono focus:outline-none transition">
+          </div>
+
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 border-t border-white/[0.08] pt-4">
+          <button id="saveSettingsBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98]">
+            Lưu Cấu Hình
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- User Guide Modal -->
+  <div id="guideModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="double-bezel-shell rounded-[28px] p-2 bg-gradient-to-b from-white/[0.12] via-white/[0.04] to-transparent border border-white/[0.1] shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto animate-scaleUp">
+      <div class="double-bezel-core rounded-[22px] bg-[#0d0f1a] p-6 flex flex-col gap-4 border border-white/[0.06]">
+        
+        <div class="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+              <i class="fa-solid fa-book-bookmark"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-100">Hướng Dẫn Sử Dụng Math2LaTeX Studio</h3>
+          </div>
+          <button id="closeGuideBtn" class="w-8 h-8 rounded-lg bg-[#141724] text-slate-400 hover:text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-300 space-y-3 leading-relaxed">
+          <div class="p-3.5 bg-[#080a12] rounded-xl border border-white/[0.06]">
+            <h4 class="font-bold text-indigo-300 mb-1 flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">1</span> Nạp ảnh đề thi</h4>
+            <p>Kéo thả ảnh hoặc bấm phím tắt <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono font-bold">Ctrl + V</kbd> để dán ảnh chụp màn hình bài toán từ máy tính/điện thoại.</p>
+          </div>
+          <div class="p-3.5 bg-[#080a12] rounded-xl border border-white/[0.06]">
+            <h4 class="font-bold text-indigo-300 mb-1 flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">2</span> Cắt vùng chọn (Nếu cần)</h4>
+            <p>Dùng công cụ <strong>"Cắt vùng chọn"</strong> để khoanh vùng một câu trắc nghiệm hoặc một công thức nhất định nếu ảnh quá dài.</p>
+          </div>
+          <div class="p-3.5 bg-[#080a12] rounded-xl border border-white/[0.06]">
+            <h4 class="font-bold text-indigo-300 mb-1 flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">3</span> Chuyển đổi & Chỉnh sửa</h4>
+            <p>Hệ thống tự động biên dịch sang mã LaTeX chuẩn đẹp. Bạn có thể chèn nhanh các ký hiệu toán từ thanh công cụ hoặc sửa trực tiếp.</p>
+          </div>
+          <div class="p-3.5 bg-[#080a12] rounded-xl border border-white/[0.06]">
+            <h4 class="font-bold text-indigo-300 mb-1 flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">4</span> Xuất bản hoặc Mở trên Overleaf</h4>
+            <p>Tải tệp <code>.tex</code> về máy hoặc bấm nút <strong>Overleaf</strong> để mở và biên dịch ra file PDF hoàn chỉnh ngay lập tức.</p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-white/[0.08]">
+          <button id="guideGotItBtn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition">
+            Đã Hiểu
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+
+  <!-- Hidden Form for Direct Overleaf Submission -->
+  <form id="overleafForm" action="https://www.overleaf.com/docs" method="POST" target="_blank" class="hidden">
+    <input type="hidden" name="snip" id="overleafSnipInput">
+  </form>
+
+  <!-- Cropper.js Script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+  <!-- Application Logic Script -->
+  <script src="app.js"></script>
+</body>
+</html>
