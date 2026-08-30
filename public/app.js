@@ -518,7 +518,6 @@ function setupEventListeners() {
   el.printPreviewBtn?.addEventListener('click', () => window.print());
 
 
-
   // Settings Modal Handlers
   el.openSettingsBtn?.addEventListener('click', () => el.settingsModal?.classList.remove('hidden'));
   el.closeSettingsBtn?.addEventListener('click', () => el.settingsModal?.classList.add('hidden'));
