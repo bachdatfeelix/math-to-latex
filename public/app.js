@@ -255,7 +255,7 @@ function loadSettings() {
 
   renderApiKeyInputs(keys);
 
-  const savedModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-3.7-flash';
+  const savedModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-2.5-flash';
   const savedOllamaUrl = localStorage.getItem('math2latex_ollama_url') || 'http://localhost:11434';
   const savedOllamaModel = localStorage.getItem('math2latex_ollama_model') || 'llava';
   const savedCustomUrl = localStorage.getItem('math2latex_custom_url') || '';
@@ -364,7 +364,7 @@ function getSavedApiKeys() {
 
 function saveSettings() {
   const keys = getSavedApiKeys();
-  const geminiModel = el.geminiModelSelect?.value || 'gemini-3.7-flash';
+  const geminiModel = el.geminiModelSelect?.value || 'gemini-2.5-flash';
   const ollamaUrl = el.ollamaUrlInput?.value.trim() || 'http://localhost:11434';
   const ollamaModel = el.ollamaModelInput?.value.trim() || 'llava';
   const customUrl = el.customApiUrlInput?.value.trim() || '';
@@ -969,7 +969,7 @@ async function callConvertApi(base64Image, isFullDoc = true, customNotes = '') {
     keys.unshift(legacyKey);
   }
   const primaryKey = keys[0] || legacyKey || '';
-  const geminiModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-3.7-flash';
+  const geminiModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-2.5-flash';
   const ollamaUrl = localStorage.getItem('math2latex_ollama_url') || 'http://localhost:11434';
   const ollamaModel = localStorage.getItem('math2latex_ollama_model') || 'llava';
   const customApiUrl = localStorage.getItem('math2latex_custom_url') || '';
