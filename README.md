@@ -1,4 +1,4 @@
-# 📐 Math2LaTeX Studio
+# 📐 MiDaTeX
 
 Ứng dụng Web chuyển đổi hình ảnh đề thi Toán học (ảnh chụp, ảnh màn hình, công thức viết tay hoặc in ấn) sang mã nguồn **LaTeX** chuẩn quốc tế và tự động xuất file `.tex`.
 

@@ -1,5 +1,5 @@
 @echo off
-title Math2LaTeX Studio - Share Online
+title MiDaTeX - Share Online
 color 0a
 echo ========================================================
 echo       TAO LINK PUBLIC MIEN PHI TRUC TIEP

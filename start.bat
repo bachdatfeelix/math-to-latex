@@ -1,8 +1,8 @@
 @echo off
-title Math2LaTeX Studio Launcher
+title MiDaTeX Launcher
 color 0b
 echo ========================================================
-echo          MATH2LATEX STUDIO - TOAN SANG LATEX
+echo                MIDATEX - TOAN SANG LATEX
 echo ========================================================
 echo.
 echo [*] Dang kiem tra dependencies...

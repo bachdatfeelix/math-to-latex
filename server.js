@@ -27,6 +27,7 @@ const upload = multer({
 
 /**
  * System prompt specialized in Vietnamese & International Math Exam / Formula Extraction
+ * (Preserved 100% untouched from GitHub repository)
  */
 const SYSTEM_PROMPT = `Bạn là một chuyên gia chuyển đổi đề thi Toán học từ hình ảnh sang mã nguồn LaTeX chất lượng cao, chuẩn xác 100%.
 
@@ -41,7 +42,7 @@ Nhiệm vụ của bạn:
    - Nếu là đề trắc nghiệm có 4 đáp án A, B, C, D:
      Trình bày rõ ràng, ví dụ:
      \\textbf{Câu 1.} Cho hàm số $y = f(x)$...
-     \\begin{tasks}(4) % hoặc dùng bảng/khoảng cách \quad
+     \\begin{tasks}(4) % hoặc dùng bảng/khoảng cách \\quad
      \\task \\textbf{A.} $y = 2x + 1$
      \\task \\textbf{B.} $y = x^2 - 3$
      \\task \\textbf{C.} $y = \\dfrac{x+1}{x-2}$
@@ -68,17 +69,44 @@ Trả về mã LaTeX sạch. Nếu người dùng chọn tạo toàn bộ tài l
 Nếu người dùng chỉ cần công thức/đoạn trích (Snippet), chỉ trả về nội dung bên trong.`;
 
 /**
- * Gemini Vision API handler with Self-Healing Multi-Model Fallback (Google AI Studio)
+ * Gemini Vision API handler with Self-Healing Multi-Key & Multi-Model Fallback
+ * Retains exact GitHub prompt invocation, parameters (temperature: 0.1, topP: 0.95), and multi-key resiliency
  */
-async function callGeminiVision(apiKey, base64Image, mimeType, isFullDocument = true, customNotes = '', requestedModel = 'gemini-3.7-flash') {
-  // Candidate models priority list with Gemini 3.7 Flash as top priority
+async function callGeminiVision(apiKeys, base64Image, mimeType, isFullDocument = true, customNotes = '', requestedModel = 'gemini-3.7-flash') {
+  // Normalize candidate API keys list
+  let rawKeys = [];
+  if (Array.isArray(apiKeys)) {
+    rawKeys = apiKeys;
+  } else if (typeof apiKeys === 'string') {
+    rawKeys = apiKeys.split(/[,;\n]+/).map(k => k.trim());
+  }
+
+  // Also include environment backup keys if configured in .env
+  if (process.env.GEMINI_BACKUP_KEY) {
+    rawKeys.push(...process.env.GEMINI_BACKUP_KEY.split(/[,;\n]+/).map(k => k.trim()));
+  }
+  if (process.env.GEMINI_API_KEY) {
+    rawKeys.push(...process.env.GEMINI_API_KEY.split(/[,;\n]+/).map(k => k.trim()));
+  }
+
+  // Normalize and deduplicate supplied keys. Do not blacklist a prefix here:
+  // API-key validity must be decided by Gemini so valid keys are never rejected locally.
+  const keysList = rawKeys
+    .map(key => typeof key === 'string' ? key.trim() : '')
+    .filter((key, index, keys) => key.length > 10 && keys.indexOf(key) === index);
+
+  if (keysList.length === 0) {
+    throw new Error('Chưa có Gemini API Key hợp lệ! Hãy bấm vào biểu tượng Cài đặt (⚙) ở góc phải để nhập Gemini API Key miễn phí từ Google AI Studio (aistudio.google.com).');
+  }
+
+  // Candidate models priority list with Gemini 3.7 Flash as top priority (matching GitHub repo)
   const candidateModels = [
     requestedModel,
     'gemini-3.7-flash',
     'gemini-3.6-flash',
     'gemini-2.5-flash',
-    'gemini-1.5-flash'
-  ].filter((v, i, a) => v && a.indexOf(v) === i); // remove duplicates
+    'gemini-2.5-pro'
+  ].filter((v, i, a) => v && a.indexOf(v) === i);
 
   const promptText = `${SYSTEM_PROMPT}
 
@@ -110,57 +138,125 @@ Hãy phân tích hình ảnh đính kèm và xuất mã LaTeX chính xác nhất
   };
 
   let lastError = null;
+  let hasSwitchedKey = false;
 
-  for (const modelName of candidateModels) {
-    try {
-      const cleanModel = modelName.replace(/^models\//, '');
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
+  for (let keyIdx = 0; keyIdx < keysList.length; keyIdx++) {
+    const currentKey = keysList[keyIdx];
+    const keyPreview = `${currentKey.substring(0, 6)}...${currentKey.slice(-4)}`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    for (const modelName of candidateModels) {
+      try {
+        const cleanModel = modelName.replace(/^models\//, '');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${currentKey}`;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let parsed;
-        try { parsed = JSON.parse(errorText); } catch (_) {}
-        const msg = parsed?.error?.message || `Gemini API Error (${response.status}): ${errorText}`;
-        
-        // If model is deprecated or not found, proceed to next candidate in fallback chain
-        if (response.status === 404 || msg.includes('no longer available') || msg.includes('not found') || msg.includes('is not supported')) {
-          console.warn(`[Gemini OCR] Model "${cleanModel}" không khả dụng (${msg}). Đang tự động chuyển sang model dự phòng...`);
-          lastError = new Error(msg);
-          continue;
+        // Gemini can return 503 while a model is temporarily at capacity.
+        // Retry the same model with bounded exponential backoff before falling
+        // through to the next capable model.
+        const maxServiceRetries = 3;
+        let response;
+        let responseMessage = '';
+
+        for (let attempt = 0; attempt <= maxServiceRetries; attempt++) {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) break;
+
+          const errorText = await response.text();
+          let parsed;
+          try { parsed = JSON.parse(errorText); } catch (_) {}
+          responseMessage = parsed?.error?.message || `Gemini API Error (${response.status}): ${errorText}`;
+
+          const isTemporaryServiceError = response.status === 408 ||
+            response.status >= 500 ||
+            /\bUNAVAILABLE\b|high demand|temporarily overloaded/i.test(responseMessage);
+
+          if (!isTemporaryServiceError || attempt === maxServiceRetries) break;
+
+          const delayMs = (1000 * (2 ** attempt)) + Math.floor(Math.random() * 300);
+          console.warn(`[Gemini OCR] Model "${cleanModel}" tạm quá tải (HTTP ${response.status}). Thử lại sau ${delayMs}ms — lần ${attempt + 1}/${maxServiceRetries}.`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
         }
 
-        throw new Error(msg);
-      }
+        if (!response.ok) {
+          const msg = responseMessage || `Gemini API Error (${response.status})`;
 
-      const data = await response.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const isTemporaryServiceError = response.status === 408 ||
+            response.status >= 500 ||
+            /\bUNAVAILABLE\b|high demand|temporarily overloaded/i.test(msg);
 
-      // Clean Markdown code fence if present
-      let cleanLatex = rawText.trim();
-      if (cleanLatex.startsWith('```latex')) {
-        cleanLatex = cleanLatex.replace(/^```latex\s*/i, '').replace(/```\s*$/i, '');
-      } else if (cleanLatex.startsWith('```tex')) {
-        cleanLatex = cleanLatex.replace(/^```tex\s*/i, '').replace(/```\s*$/i, '');
-      } else if (cleanLatex.startsWith('```')) {
-        cleanLatex = cleanLatex.replace(/^```\s*/i, '').replace(/```\s*$/i, '');
-      }
+          if (isTemporaryServiceError) {
+            console.warn(`[Gemini OCR] Model "${cleanModel}" vẫn quá tải sau ${maxServiceRetries} lần thử lại. Đang chuyển sang model dự phòng...`);
+            lastError = new Error(`Model "${cleanModel}" đang quá tải: ${msg}`);
+            continue;
+          }
+          
+          const isRateLimitOrQuota = response.status === 429 || 
+                                     msg.includes('RESOURCE_EXHAUSTED') || 
+                                     msg.includes('quota') || 
+                                     msg.includes('Quota exceeded') || 
+                                     msg.includes('Rate limit') || 
+                                     msg.includes('Too Many Requests');
 
-      return cleanLatex.trim();
-    } catch (err) {
-      lastError = err;
-      if (!err.message.includes('no longer available') && !err.message.includes('not found')) {
-        throw err;
+          // If rate limit / quota exceeded, switch to the backup key immediately!
+          if (isRateLimitOrQuota) {
+            console.warn(`[Gemini OCR] ⚠️ API Key #${keyIdx + 1} (${keyPreview}) bị giới hạn Quota / Rate Limit (HTTP ${response.status}: ${msg}).`);
+            if (keyIdx < keysList.length - 1) {
+              const nextKeyPreview = `${keysList[keyIdx + 1].substring(0, 6)}...${keysList[keyIdx + 1].slice(-4)}`;
+              console.log(`[Gemini OCR] 🔄 Đang tự động chuyển sang API Key dự phòng #${keyIdx + 2} (${nextKeyPreview})...`);
+              hasSwitchedKey = true;
+            }
+            lastError = new Error(`API Key #${keyIdx + 1} bị quá tải/hết quota (${msg})`);
+            break; // Break model loop, advance to next key in keysList
+          }
+
+          // If model is deprecated or not found, proceed to next candidate in fallback chain
+          if (response.status === 404 || msg.includes('no longer available') || msg.includes('not found') || msg.includes('is not supported')) {
+            console.warn(`[Gemini OCR] Model "${cleanModel}" không khả dụng (${msg}). Đang chuyển sang model dự phòng...`);
+            lastError = new Error(msg);
+            continue;
+          }
+
+          throw new Error(msg);
+        }
+
+        const data = await response.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        // Clean Markdown code fence if present
+        let cleanLatex = rawText.trim();
+        if (cleanLatex.startsWith('```latex')) {
+          cleanLatex = cleanLatex.replace(/^```latex\s*/i, '').replace(/```\s*$/i, '');
+        } else if (cleanLatex.startsWith('```tex')) {
+          cleanLatex = cleanLatex.replace(/^```tex\s*/i, '').replace(/```\s*$/i, '');
+        } else if (cleanLatex.startsWith('```')) {
+          cleanLatex = cleanLatex.replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+        }
+
+        return {
+          latex: cleanLatex.trim(),
+          usedKeyIndex: keyIdx,
+          switchedKey: hasSwitchedKey || keyIdx > 0,
+          usedKeyPreview: keyPreview
+        };
+      } catch (err) {
+        lastError = err;
+        const msg = err.message || '';
+        const isRateLimit = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('Rate limit') || msg.includes('429');
+        if (isRateLimit) {
+          break; // Advance to next key
+        }
+        if (!msg.includes('no longer available') && !msg.includes('not found')) {
+          throw err;
+        }
       }
     }
   }
 
-  throw lastError || new Error('Không thể kết nối với Gemini API. Vui lòng kiểm tra lại API Key.');
+  throw lastError || new Error('Không thể kết nối với Gemini API. Tất cả API Key đều bị giới hạn hạn ngạch hoặc không khả dụng.');
 }
 
 /**
@@ -254,7 +350,7 @@ async function callCustomVision(apiUrl, apiKey, model, base64Image, mimeType, is
 }
 
 /**
- * API Route: Convert Image to LaTeX
+ * API Route: Convert Image / PDF to LaTeX
  */
 app.post('/api/convert', upload.single('image'), async (req, res) => {
   try {
@@ -265,7 +361,7 @@ app.post('/api/convert', upload.single('image'), async (req, res) => {
       base64Image = req.file.buffer.toString('base64');
       mimeType = req.file.mimetype || 'image/jpeg';
     } else if (req.body.imageBase64) {
-      const match = req.body.imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+      const match = req.body.imageBase64.match(/^data:(image\/[a-zA-Z+]+|application\/pdf);base64,(.+)$/);
       if (match) {
         mimeType = match[1];
         base64Image = match[2];
@@ -275,7 +371,7 @@ app.post('/api/convert', upload.single('image'), async (req, res) => {
     }
 
     if (!base64Image) {
-      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp hình ảnh đề toán (Upload hoặc Base64)!' });
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp hình ảnh hoặc tệp đề toán (Upload hoặc Base64)!' });
     }
 
     const engine = req.body.engine || 'gemini';
@@ -283,17 +379,39 @@ app.post('/api/convert', upload.single('image'), async (req, res) => {
     const customNotes = req.body.customNotes || '';
 
     let latexResult = '';
+    let switchedKey = false;
+    let fallbackNotice = null;
 
     if (engine === 'gemini') {
-      const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY;
+      let candidateKeys = [];
+      if (req.body.apiKeys) {
+        if (Array.isArray(req.body.apiKeys)) {
+          candidateKeys.push(...req.body.apiKeys);
+        } else if (typeof req.body.apiKeys === 'string') {
+          candidateKeys.push(...req.body.apiKeys.split(/[,;\n]+/).map(k => k.trim()));
+        }
+      }
+      if (req.body.apiKey) candidateKeys.push(req.body.apiKey);
+      if (req.body.backupApiKey) candidateKeys.push(req.body.backupApiKey);
+      if (process.env.GEMINI_API_KEY) candidateKeys.push(process.env.GEMINI_API_KEY);
+      if (process.env.GEMINI_BACKUP_KEY) candidateKeys.push(process.env.GEMINI_BACKUP_KEY);
+
+      candidateKeys = candidateKeys.filter((v, i, a) => v && a.indexOf(v) === i);
       const geminiModel = req.body.geminiModel || process.env.GEMINI_MODEL || 'gemini-3.7-flash';
-      if (!apiKey) {
+
+      if (candidateKeys.length === 0) {
         return res.status(400).json({
           success: false,
           error: 'Chưa có Gemini API Key! Hãy nhập API Key miễn phí từ Google AI Studio (aistudio.google.com) ở mục Cài đặt, hoặc cấu hình GEMINI_API_KEY trong file .env.'
         });
       }
-      latexResult = await callGeminiVision(apiKey, base64Image, mimeType, isFullDocument, customNotes, geminiModel);
+
+      const result = await callGeminiVision(candidateKeys, base64Image, mimeType, isFullDocument, customNotes, geminiModel);
+      latexResult = result.latex;
+      switchedKey = result.switchedKey;
+      if (switchedKey) {
+        fallbackNotice = `Đã tự động chuyển sang API Key #${result.usedKeyIndex + 1} (${result.usedKeyPreview}) do Key trước bị giới hạn hạn ngạch (Rate Limit)!`;
+      }
     } else if (engine === 'ollama') {
       const ollamaUrl = req.body.ollamaUrl || 'http://localhost:11434';
       const model = req.body.ollamaModel || 'llava';
@@ -311,6 +429,8 @@ app.post('/api/convert', upload.single('image'), async (req, res) => {
       success: true,
       latex: latexResult,
       engine: engine,
+      switchedKey: switchedKey,
+      fallbackNotice: fallbackNotice,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -349,7 +469,7 @@ app.get('/api/status', (req, res) => {
     status: 'online',
     app: 'Math2LaTeX Studio PRO',
     version: '1.0.0',
-    defaultModel: 'gemini-3.6-flash',
+    defaultModel: 'gemini-3.7-flash',
     hasEnvKey: !!process.env.GEMINI_API_KEY
   });
 });

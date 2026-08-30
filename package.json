@@ -1,5 +1,5 @@
 {
-  "name": "math-to-latex-studio",
+  "name": "midatex",
   "version": "1.0.0",
   "description": "Smart Web App converting Math Exam Images into standard LaTeX files with live preview, crop tool, and multi-engine support",
   "main": "server.js",

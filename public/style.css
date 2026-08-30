@@ -1,216 +1,698 @@
 /* ==========================================================================
-   Math2LaTeX Studio - Vanguard High-End Visual Design & Micro-Interactions
+   MiDaTeX — "Bảng đen & Bút đỏ" (Chalkboard & Red Pen)
+   with Light/Dark Mode Support
    ========================================================================== */
 
+/* --- CSS Custom Properties --- */
 :root {
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-math: 'STIX Two Text', 'Cambria Math', Times, serif;
-  
+  /* Dark mode (chalkboard) - default when .dark class is on html */
+  --board-950: #12201B;
+  --board-900: #17251F;
+  --board-800: #1D2E27;
+  --board-700: #28392F;
+  --board-600: #3A4E42;
+  --board-500: #54695C;
+
+  --chalk: #EFE8D8;
+  --chalk-dim: #A7B3A5;
+  --chalk-faint: #7C8A80;
+
+  --pen: #C0392B;
+  --pen-600: #A73224;
+  --pen-400: #D65A46;
+
+  --gold: #D6A23C;
+  --gold-600: #B98A2E;
+
+  --paper: #FBF7EE;
+  --paper-line: #D8CBB5;
+  --paper-ink: #2A2521;
+
+  /* Light mode variables */
+  --light-bg: #FAFAF8;
+  --light-surface: #FFFFFF;
+  --light-surface-alt: #F5F3EF;
+  --light-border: #E5E0D8;
+  --light-border-subtle: #EDE9E2;
+  --light-text: #2A2521;
+  --light-text-dim: #6B6560;
+  --light-text-faint: #9B9590;
+
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* {
-  box-sizing: border-box;
+html, body {
+  height: 100%;
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: #07090e;
-  color: #f1f5f9;
-  overflow-x: hidden;
+  font-feature-settings: "ss01" 1;
 }
 
-/* Ambient Radial Glow */
-.ambient-glow {
+/* --- Board texture (dark mode only) --- */
+.board-texture {
+  background-image:
+    linear-gradient(rgba(239, 232, 216, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 232, 216, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 25%, black 30%, transparent 85%);
+  mask-image: radial-gradient(ellipse 75% 55% at 50% 25%, black 30%, transparent 85%);
+}
+
+/* Hide board texture and SVG arcs in light mode */
+html:not(.dark) .board-texture,
+html:not(.dark) .ambient-bg-svg {
+  display: none;
+}
+
+/* Header double rule */
+.header-rule {
+  position: relative;
+}
+.header-rule::after {
+  content: "";
   position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 1px;
+  background: rgba(192, 57, 43, 0.35);
   pointer-events: none;
-  filter: blur(140px);
-  will-change: transform;
+}
+html:not(.dark) .header-rule::after {
+  background: rgba(192, 57, 43, 0.2);
 }
 
-.grid-pattern {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+/* --- Panels --- */
+.slate-panel {
+  background: var(--board-800);
+  border: 1px solid rgba(239, 232, 216, 0.08);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(239, 232, 216, 0.04), 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+html:not(.dark) .slate-panel {
+  background: var(--light-surface);
+  border: 1px solid var(--light-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
 }
 
-/* ==========================================================================
-   Double-Bezel Nested Architecture (Machined Hardware Aesthetic)
-   ========================================================================== */
-.double-bezel-shell {
-  position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 24px 48px -12px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+.slate-panel-flat {
+  background: var(--board-800);
+  border: 1px solid rgba(239, 232, 216, 0.08);
+  border-radius: 10px;
+}
+html:not(.dark) .slate-panel-flat {
+  background: var(--light-surface-alt);
+  border: 1px solid var(--light-border-subtle);
 }
 
-.double-bezel-core {
-  box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    0 4px 20px rgba(0, 0, 0, 0.4);
+.modal-panel {
+  background: var(--board-800);
+  border: 1px solid rgba(239, 232, 216, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+html:not(.dark) .modal-panel {
+  background: var(--light-surface);
+  border: 1px solid var(--light-border);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15);
 }
 
-/* ==========================================================================
-   Segmented Controls & Navigation Pills
-   ========================================================================== */
-.engine-pill {
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.25s var(--ease-spring);
+/* --- Step index badges --- */
+.step-index {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px; font-weight: 700;
+  background: rgba(214, 162, 60, 0.12);
+  color: var(--gold);
+  border: 1px solid rgba(214, 162, 60, 0.3);
+  flex-shrink: 0;
+}
+html:not(.dark) .step-index {
+  background: rgba(214, 162, 60, 0.08);
+  border-color: rgba(214, 162, 60, 0.25);
 }
 
-.engine-pill.active {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+.step-index-lg {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  font-size: 14px;
 }
 
-.tab-pill {
-  position: relative;
+/* --- Stamp & tag badges --- */
+.stamp-badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid rgba(214, 162, 60, 0.5);
+  padding: 1px 7px;
+  border-radius: 3px;
+  transform: rotate(-2deg);
+  white-space: nowrap;
+}
+html:not(.dark) .stamp-badge {
+  color: var(--pen);
+  border-color: rgba(192, 57, 43, 0.4);
+}
+
+.tag-chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--board-900);
+  background: var(--gold);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.hint-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  color: var(--chalk-dim);
+  background: var(--board-800);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 232, 216, 0.08);
+  white-space: nowrap;
+}
+html:not(.dark) .hint-chip {
+  color: var(--light-text-dim);
+  background: var(--light-surface-alt);
+  border-color: var(--light-border-subtle);
+}
+
+.kbd {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px; font-weight: 700;
+  color: var(--gold);
+  background: rgba(214, 162, 60, 0.1);
+  border: 1px solid rgba(214, 162, 60, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+html:not(.dark) .kbd {
+  color: var(--pen);
+  background: rgba(192, 57, 43, 0.06);
+  border-color: rgba(192, 57, 43, 0.2);
+}
+
+/* --- Mode & tab pills --- */
+.mode-tab-btn {
+  color: var(--chalk-faint);
   cursor: pointer;
   user-select: none;
   transition: all 0.2s var(--ease-spring);
 }
-
-.tab-pill.active {
-  background: #1e1b4b;
-  color: #c7d2fe;
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+.mode-tab-btn.active {
+  background: var(--chalk);
+  color: var(--board-900);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.mode-tab-btn:not(.active):hover {
+  color: var(--chalk);
+  background: rgba(239, 232, 216, 0.08);
+}
+html:not(.dark) .mode-tab-btn {
+  color: var(--light-text-faint);
+}
+html:not(.dark) .mode-tab-btn.active {
+  background: var(--light-text);
+  color: var(--light-surface);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+html:not(.dark) .mode-tab-btn:not(.active):hover {
+  color: var(--light-text);
+  background: rgba(0,0,0,0.05);
 }
 
-/* ==========================================================================
-   Mathematical Fast Tool Pills
-   ========================================================================== */
-.math-tool-pill {
-  background: #111422;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #cbd5e1;
-  padding: 4px 9px;
-  border-radius: 8px;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  font-weight: 500;
+.engine-pill {
+  color: var(--chalk-dim);
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.18s var(--ease-spring);
+  user-select: none;
+  transition: all 0.2s var(--ease-spring);
+}
+.engine-pill.active {
+  background: var(--chalk);
+  color: var(--board-900);
+  font-weight: 600;
+}
+.engine-pill:not(.active):hover {
+  color: var(--chalk);
+  background: rgba(239, 232, 216, 0.06);
+}
+html:not(.dark) .engine-pill {
+  color: var(--light-text-dim);
+}
+html:not(.dark) .engine-pill.active {
+  background: var(--light-text);
+  color: var(--light-surface);
+}
+html:not(.dark) .engine-pill:not(.active):hover {
+  color: var(--light-text);
+  background: rgba(0,0,0,0.04);
 }
 
-.math-tool-pill:hover {
-  background: #232742;
-  border-color: #6366f1;
-  color: #ffffff;
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+.tab-pill {
+  color: var(--chalk-faint);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s var(--ease-spring);
+}
+.tab-pill.active {
+  background: var(--chalk);
+  color: var(--board-900);
+  font-weight: 700;
+}
+.tab-pill:not(.active):hover {
+  color: var(--chalk);
+  background: rgba(239, 232, 216, 0.06);
+}
+html:not(.dark) .tab-pill {
+  color: var(--light-text-faint);
+}
+html:not(.dark) .tab-pill.active {
+  background: var(--light-text);
+  color: var(--light-surface);
+}
+html:not(.dark) .tab-pill:not(.active):hover {
+  color: var(--light-text);
+  background: rgba(0,0,0,0.04);
 }
 
-.math-tool-pill:active {
-  transform: translateY(0);
+/* --- Buttons --- */
+.btn-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 11px; border-radius: 7px;
+  background: rgba(239, 232, 216, 0.05);
+  border: 1px solid rgba(239, 232, 216, 0.1);
+  color: var(--chalk);
+  font-weight: 500;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.btn-chip:hover {
+  background: rgba(239, 232, 216, 0.1);
+  border-color: rgba(214, 162, 60, 0.4);
+}
+.btn-chip:active { transform: scale(0.98); }
+
+html:not(.dark) .btn-chip {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--light-border);
+  color: var(--light-text);
+}
+html:not(.dark) .btn-chip:hover {
+  background: rgba(0,0,0,0.06);
+  border-color: rgba(214, 162, 60, 0.5);
 }
 
-/* ==========================================================================
-   Hero Convert Button & Shimmer Sweep
-   ========================================================================== */
+.btn-chip-accent {
+  background: var(--gold); border-color: var(--gold);
+  color: var(--board-900); font-weight: 600;
+}
+.btn-chip-accent:hover {
+  background: #e4b458; border-color: #e4b458;
+}
+
+.btn-chip-solid-sage {
+  background: #5c7a63; border-color: #5c7a63; color: #f5f1e6;
+}
+.btn-chip-solid-sage:hover {
+  background: #6c8c73; border-color: #6c8c73;
+}
+
+.icon-btn {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 7px;
+  background: rgba(239, 232, 216, 0.05);
+  border: 1px solid rgba(239, 232, 216, 0.1);
+  color: var(--chalk-dim);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.icon-btn:hover {
+  background: rgba(239, 232, 216, 0.1);
+  color: var(--chalk);
+}
+html:not(.dark) .icon-btn {
+  background: rgba(0,0,0,0.03);
+  border-color: var(--light-border);
+  color: var(--light-text-dim);
+}
+html:not(.dark) .icon-btn:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--light-text);
+}
+
+.btn-primary {
+  background: var(--pen); color: var(--paper);
+  padding: 10px 20px; border-radius: 9px;
+  font-weight: 600; font-size: 12px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.btn-primary:hover { background: var(--pen-400); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+  background: var(--board-700); color: var(--chalk);
+  padding: 10px 20px; border-radius: 9px;
+  font-weight: 600; font-size: 12px;
+  transition: background-color 0.15s ease;
+}
+.btn-secondary:hover { background: var(--board-600); }
+html:not(.dark) .btn-secondary {
+  background: var(--light-surface-alt);
+  color: var(--light-text);
+  border: 1px solid var(--light-border);
+}
+html:not(.dark) .btn-secondary:hover {
+  background: var(--light-border-subtle);
+}
+
+/* CTA convert button */
 .cta-convert-btn {
-  background-size: 200% 200%;
+  background: var(--pen); color: var(--paper);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 8px 20px rgba(192,57,43,0.25);
+  transition: background-color 0.2s ease, transform 0.12s ease;
+}
+.cta-convert-btn:hover { background: var(--pen-400); }
+.cta-convert-btn:active { transform: scale(0.985); }
+
+/* --- Fields --- */
+.field {
+  width: 100%;
+  background: var(--board-950);
+  border: 1px solid rgba(239, 232, 216, 0.12);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--chalk);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.field::placeholder { color: var(--chalk-faint); }
+.field:focus { border-color: var(--gold); }
+html:not(.dark) .field {
+  background: var(--light-surface-alt);
+  border-color: var(--light-border);
+  color: var(--light-text);
+}
+html:not(.dark) .field::placeholder { color: var(--light-text-faint); }
+html:not(.dark) .field:focus { border-color: var(--gold); }
+
+/* --- Drop zone --- */
+.dropzone {
+  border: 1.5px dashed rgba(239, 232, 216, 0.22);
+  background: rgba(0, 0, 0, 0.14);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.dropzone:hover, .dropzone.drag-active, .dropzone.drag-over {
+  border-color: rgba(214, 162, 60, 0.6);
+  background: rgba(214, 162, 60, 0.05);
+}
+html:not(.dark) .dropzone {
+  border-color: var(--light-border);
+  background: var(--light-surface-alt);
+}
+html:not(.dark) .dropzone:hover,
+html:not(.dark) .dropzone.drag-active,
+html:not(.dark) .dropzone.drag-over {
+  border-color: var(--gold);
+  background: rgba(214, 162, 60, 0.04);
 }
 
-.cta-convert-btn:hover {
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
+.tape {
+  position: absolute;
+  width: 34px; height: 14px;
+  background: rgba(214, 162, 60, 0.16);
+  border: 1px solid rgba(214, 162, 60, 0.32);
+  pointer-events: none;
+}
+.tape-tl { top: 8px; left: 8px; transform: rotate(-8deg); }
+.tape-br { bottom: 8px; right: 8px; transform: rotate(6deg); }
+html:not(.dark) .tape {
+  background: rgba(214, 162, 60, 0.1);
+  border-color: rgba(214, 162, 60, 0.2);
 }
 
-.shimmer-effect {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%);
-  animation: shimmerSweep 3.5s infinite;
+/* --- Sample buttons --- */
+.sample-btn {
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left;
+  padding: 9px 10px; border-radius: 8px;
+  background: rgba(239, 232, 216, 0.04);
+  border: 1px solid rgba(239, 232, 216, 0.08);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.sample-btn:hover {
+  background: rgba(214, 162, 60, 0.07);
+  border-color: rgba(214, 162, 60, 0.35);
+}
+.sample-btn-title {
+  font-size: 12px; font-weight: 600;
+  color: var(--chalk);
+  transition: color 0.15s ease;
+}
+.sample-btn:hover .sample-btn-title { color: var(--gold); }
+.sample-btn-sub { font-size: 10px; color: var(--chalk-faint); }
+
+html:not(.dark) .sample-btn {
+  background: var(--light-surface-alt);
+  border-color: var(--light-border-subtle);
+}
+html:not(.dark) .sample-btn:hover {
+  background: rgba(214, 162, 60, 0.06);
+  border-color: rgba(214, 162, 60, 0.4);
+}
+html:not(.dark) .sample-btn-title { color: var(--light-text); }
+html:not(.dark) .sample-btn-sub { color: var(--light-text-faint); }
+
+.check-item { padding-left: 0; }
+.check-item::before {
+  content: "—"; color: var(--gold); margin-right: 6px;
 }
 
-@keyframes shimmerSweep {
-  100% {
-    transform: translateX(100%);
-  }
+/* --- Math quick-insert pills (Rendered Math) --- */
+.math-tool-pill {
+  font-family: "STIX Two Text", serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  color: var(--chalk);
+  background: rgba(239, 232, 216, 0.05);
+  border: 1px solid rgba(239, 232, 216, 0.1);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.math-tool-pill:hover {
+  color: var(--gold);
+  border-color: rgba(214, 162, 60, 0.45);
+  background: rgba(214, 162, 60, 0.09);
+  transform: translateY(-1px);
+}
+.math-tool-pill .katex {
+  font-size: 1.05em;
+}
+html:not(.dark) .math-tool-pill {
+  color: var(--light-text);
+  background: var(--light-surface-alt);
+  border-color: var(--light-border-subtle);
+}
+html:not(.dark) .math-tool-pill:hover {
+  color: var(--pen);
+  border-color: rgba(192, 57, 43, 0.35);
+  background: rgba(192, 57, 43, 0.05);
 }
 
-/* ==========================================================================
-   Code Editor Aesthetics
-   ========================================================================== */
-#latexEditor {
-  font-family: var(--font-mono);
-  line-height: 1.65;
-  tab-size: 2;
-  color: #c7d2fe;
+/* --- PDF Viewer Canvas Wrap --- */
+.pdf-page-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(214, 162, 60, 0.52) transparent;
+  scrollbar-gutter: stable;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 232, 216, 0.1);
+  background: var(--board-950);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10px;
+}
+html:not(.dark) .pdf-page-canvas-wrap {
+  border-color: var(--light-border);
+  background: #f1f0ea;
+  scrollbar-color: rgba(192, 57, 43, 0.5) transparent;
+}
+.pdf-page-canvas-wrap::-webkit-scrollbar {
+  width: 7px;
+}
+.pdf-page-canvas-wrap::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 7px 0;
+}
+.pdf-page-canvas-wrap::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  background: rgba(214, 162, 60, 0.52);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+.pdf-page-canvas-wrap::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(214, 162, 60, 0.78);
+}
+html:not(.dark) .pdf-page-canvas-wrap::-webkit-scrollbar-thumb {
+  background-color: rgba(192, 57, 43, 0.5);
+}
+html:not(.dark) .pdf-page-canvas-wrap::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(192, 57, 43, 0.72);
+}
+#fileInput.is-inactive {
+  pointer-events: none;
+}
+.pdf-page-canvas-wrap canvas {
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  border-radius: 4px;
+  display: block;
 }
 
-#latexEditor::selection {
-  background: rgba(99, 102, 241, 0.35);
-  color: #ffffff;
+/* --- Dynamic API Key Rows --- */
+.api-key-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(239, 232, 216, 0.08);
+  transition: border-color 0.15s ease;
+}
+.api-key-row:focus-within {
+  border-color: var(--gold);
+}
+html:not(.dark) .api-key-row {
+  background: var(--light-surface-alt);
+  border-color: var(--light-border);
+}
+.key-badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.key-badge-primary {
+  background: rgba(214, 162, 60, 0.18);
+  color: var(--gold);
+  border: 1px solid rgba(214, 162, 60, 0.35);
+}
+.key-badge-backup {
+  background: rgba(239, 232, 216, 0.08);
+  color: var(--chalk-dim);
+  border: 1px solid rgba(239, 232, 216, 0.12);
+}
+html:not(.dark) .key-badge-primary {
+  background: rgba(214, 162, 60, 0.12);
+  color: var(--gold-600);
+  border-color: rgba(214, 162, 60, 0.3);
+}
+html:not(.dark) .key-badge-backup {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--light-text-dim);
+  border-color: var(--light-border);
 }
 
-/* ==========================================================================
-   KaTeX Rendered Preview Document (Pristine Exam Paper Layout)
-   ========================================================================== */
-#previewViewContainer {
-  background: #ffffff;
-  color: #0f172a;
+/* --- Exam paper preview --- */
+.exam-paper #renderOutput {
+  position: relative;
+  background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+.exam-paper #renderOutput::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 26px;
+  width: 1px;
+  background: rgba(192, 57, 43, 0.35);
 }
 
+.paper-icon-btn {
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1px solid var(--paper-line);
+  color: #4a433c;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background-color 0.15s ease;
+}
+.paper-icon-btn:hover { background: #f3eee1; }
+
+.paper-print-btn {
+  padding: 4px 10px; border-radius: 5px;
+  background: var(--pen); color: var(--paper);
+  font-weight: 600; font-size: 11px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background-color 0.15s ease;
+}
+.paper-print-btn:hover { background: var(--pen-600); }
+
+/* --- Render output styling --- */
 #renderOutput {
-  font-family: var(--font-math);
+  font-family: "STIX Two Text", serif;
   font-size: 16.5px;
   line-height: 1.8;
-  color: #1e293b;
 }
 
 #renderOutput h2 {
-  font-family: var(--font-sans);
-  color: #312e81;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 800;
   letter-spacing: -0.02em;
-  margin-top: 1.25rem;
-  margin-bottom: 0.75rem;
+  margin-top: 1.25rem; margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e0e7ff;
+  border-bottom: 2px solid var(--paper-line);
+  color: var(--pen);
 }
 
 #renderOutput h3 {
-  font-family: var(--font-sans);
-  color: #3730a3;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 700;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  margin-top: 1rem; margin-bottom: 0.5rem;
+  color: var(--pen-600);
 }
 
-#renderOutput p {
-  margin-bottom: 0.85rem;
-}
+#renderOutput p { margin-bottom: 0.85rem; }
 
-/* Math Question Card Styling inside render */
 #renderOutput .question-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-left: 4px solid #4f46e5;
+  border-left: 4px solid var(--pen);
   border-radius: 12px;
   padding: 14px 18px;
   margin: 14px 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 #renderOutput .choice-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 10px;
-  margin: 10px 0;
+  gap: 10px; margin: 10px 0;
 }
 
 #renderOutput .choice-item {
@@ -219,9 +701,7 @@ body {
   border-radius: 8px;
   padding: 6px 12px;
   font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex; align-items: center; gap: 6px;
 }
 
 #renderOutput .katex-display {
@@ -230,115 +710,176 @@ body {
   background: #f8fafc;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: auto; overflow-y: hidden;
 }
 
-/* ==========================================================================
-   Interactive Micro-Animations
-   ========================================================================== */
-@keyframes scaleUp {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+/* --- Code editor --- */
+#latexEditor {
+  font-family: "JetBrains Mono", monospace;
+  line-height: 1.65;
+  tab-size: 2;
 }
 
-.animate-scaleUp {
-  animation: scaleUp 0.22s var(--ease-spring) forwards;
-}
+/* --- Scrollbars --- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Drag over highlight */
-#dropZone.drag-over {
-  border-color: #818cf8 !important;
-  background-color: rgba(99, 102, 241, 0.12) !important;
-  transform: scale(1.01);
-}
-
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(10, 13, 22, 0.8);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+#latexEditor::-webkit-scrollbar,
+#renderOutput::-webkit-scrollbar { width: 8px; }
+#latexEditor::-webkit-scrollbar-thumb {
+  background: rgba(239, 232, 216, 0.15);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
+#renderOutput::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+::selection {
+  background: rgba(214, 162, 60, 0.28);
+  color: var(--chalk);
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+html:not(.dark) ::selection {
+  background: rgba(214, 162, 60, 0.25);
+  color: var(--light-text);
 }
 
-/* ==========================================================================
-   Toast Notifications
-   ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Cropper.js accent */
+.cropper-view-box { outline-color: var(--gold) !important; }
+.cropper-line { background-color: var(--gold) !important; }
+.cropper-point { background-color: var(--gold) !important; }
+
+/* --- Toast notifications --- */
 .toast {
   pointer-events: auto;
-  padding: 12px 18px;
-  border-radius: 14px;
-  font-size: 12.5px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 
-    0 20px 35px -10px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: 12px 18px; border-radius: 14px;
+  font-size: 12.5px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 20px 35px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
   animation: scaleUp 0.25s var(--ease-spring);
   transition: all 0.3s var(--ease-smooth);
 }
-
 .toast-success {
-  background: #064e3b;
-  color: #a7f3d0;
+  background: #1a3a2a; color: #a7f3d0;
   border: 1px solid #059669;
 }
-
 .toast-error {
-  background: #7f1d1d;
-  color: #fecaca;
+  background: #3a1a1a; color: #fecaca;
   border: 1px solid #dc2626;
 }
-
 .toast-info {
-  background: #1e1b4b;
-  color: #c7d2fe;
-  border: 1px solid #4f46e5;
+  background: var(--board-800); color: var(--chalk);
+  border: 1px solid var(--gold);
+}
+html:not(.dark) .toast-success {
+  background: #ecfdf5; color: #065f46;
+  border-color: #a7f3d0;
+}
+html:not(.dark) .toast-error {
+  background: #fef2f2; color: #991b1b;
+  border-color: #fecaca;
+}
+html:not(.dark) .toast-info {
+  background: var(--light-surface); color: var(--light-text);
+  border-color: var(--gold);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
-/* ==========================================================================
-   Print Styles for PDF Export
-   ========================================================================== */
+/* --- Progress Bar (Redesigned — elegant) --- */
+.progress-bar-animated {
+  background-size: 20px 20px;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255,255,255,0.12) 25%, transparent 25%,
+    transparent 50%, rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.12) 75%, transparent 75%, transparent
+  );
+  animation: progressStripes 0.8s linear infinite;
+  box-shadow: 0 0 12px rgba(214, 162, 60, 0.4), 0 0 4px rgba(214, 162, 60, 0.2);
+}
+
+@keyframes progressStripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 0; }
+}
+
+.progress-bar-glow {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  filter: blur(3px);
+  border-radius: 9999px;
+}
+
+.progress-success {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5) !important;
+}
+
+.progress-error {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.5) !important;
+}
+
+html:not(.dark) .progress-bar-animated {
+  box-shadow: 0 0 8px rgba(214, 162, 60, 0.3);
+}
+
+/* --- Animations --- */
+@keyframes scaleUp {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-scaleUp {
+  animation: scaleUp 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Theme toggle button --- */
+.theme-toggle-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+html.dark .theme-toggle-btn {
+  background: rgba(239, 232, 216, 0.05);
+  border: 1px solid rgba(239, 232, 216, 0.1);
+  color: var(--gold);
+}
+html.dark .theme-toggle-btn:hover {
+  background: rgba(239, 232, 216, 0.1);
+}
+html:not(.dark) .theme-toggle-btn {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--light-border);
+  color: var(--gold);
+}
+html:not(.dark) .theme-toggle-btn:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+/* --- Print --- */
 @media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-  header, #dropZone, #imageToolsBar, .sample-btn, #workspaceArea > div:first-child, .tab-pill, .math-tool-pill, #toastContainer, #settingsModal, #guideModal, .ambient-glow, .grid-pattern {
-    display: none !important;
-  }
-  #previewViewContainer {
-    display: block !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
+  body * { visibility: hidden; }
+  #renderOutput, #renderOutput * { visibility: visible; }
   #renderOutput {
-    padding: 0 !important;
-    font-size: 14pt;
-    color: #000000 !important;
+    position: absolute; left: 0; top: 0; width: 100%; padding: 24px;
   }
+  .exam-paper #renderOutput::before { left: 2px; }
 }

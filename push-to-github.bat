@@ -7,12 +7,14 @@ echo ========================================================
 echo.
 cd /d "%~dp0"
 
-echo [*] Dang kiem tra git status...
-git status
-echo.
+echo [*] Dang them tat ca cac file thay doi (git add .)...
+git add .
 
-echo [*] Dang thuc hien: git push -u origin main...
-git push -u origin main
+echo [*] Dang tao commit...
+git commit -m "feat: upgrade UI, KaTeX math symbols toolbar, Pro PDF support and multi-key rotation"
+
+echo [*] Dang day code len GitHub (git push origin main)...
+git push origin main
 
 echo.
 if %errorlevel% equ 0 (
@@ -22,7 +24,7 @@ if %errorlevel% equ 0 (
 ) else (
     color 0c
     echo [X] CO LOI XAY RA KHI PUSH!
-    echo [!] Neu bao "Repository not found", ban hay vao https://github.com/new tao repo ten "math-to-latex" truoc nhe.
+    echo [!] Kiem tra lai ket noi hoac quyen truy cap GitHub nhe.
 )
 
 echo.
