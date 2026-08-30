@@ -29,44 +29,29 @@ const upload = multer({
  * System prompt specialized in Vietnamese & International Math Exam / Formula Extraction
  * (Preserved 100% untouched from GitHub repository)
  */
-const SYSTEM_PROMPT = `Bạn là một chuyên gia chuyển đổi đề thi Toán học từ hình ảnh sang mã nguồn LaTeX chất lượng cao, chuẩn xác 100%.
+const SYSTEM_PROMPT = `Bạn là hệ thống chuyển đổi ảnh đề thi Toán học sang mã nguồn LaTeX chất lượng cao với độ chuẩn xác tuyệt đối so với ảnh gốc.
 
-Nhiệm vụ của bạn:
-1. Đọc và phân tích toàn bộ văn bản tiếng Việt và công thức toán học trong hình ảnh.
-2. Chuyển đổi chính xác sang mã LaTeX chuẩn đẹp, có thể biên dịch ngay trên Overleaf/TeXmaker/TeXstudio.
-3. Quy tắc dịch công thức & đề thi:
-   - Các công thức toán đặt trong cặp dấu $...$ (nội dòng) hoặc $$...$$ / \\[...\\] / equation (khối công thức).
-   - Dùng \\dfrac thay cho \\frac để phân số hiển thị to rõ.
-   - Sử dụng các ký hiệu chuẩn: \\mathbb{R}, \\mathbb{N}, \\mathbb{Z}, \\mathbb{C}, \\vec{a}, \\overrightarrow{AB}, \\angle ABC, \\int_{a}^{b}, \\lim_{x \\to x_0}, \\sum, \\sqrt[n]{x}, \\ge, \\le, \\ne, \\approx, \\in, \\subset, \\cup, \\cap, \\emptyset.
-   - Bảng biến thiên, hệ phương trình dùng \\begin{cases} ... \\end{cases} hoặc ma trận \\begin{pmatrix} ... \\end{pmatrix}.
-   - Nếu là đề trắc nghiệm có 4 đáp án A, B, C, D:
-     Trình bày rõ ràng, ví dụ:
-     \\textbf{Câu 1.} Cho hàm số $y = f(x)$...
-     \\begin{tasks}(4) % hoặc dùng bảng/khoảng cách \\quad
-     \\task \\textbf{A.} $y = 2x + 1$
-     \\task \\textbf{B.} $y = x^2 - 3$
-     \\task \\textbf{C.} $y = \\dfrac{x+1}{x-2}$
-     \\task \\textbf{D.} $y = \\sqrt{x-1}$
-     \\end{tasks}
-     (hoặc dùng \\textbf{A.} ... \\quad \\textbf{B.} ... \\quad \\textbf{C.} ... \\quad \\textbf{D.} ...)
-   - Nếu hình ảnh có hình vẽ hình học hoặc đồ thị:
-     Tạo mã TikZ tương ứng hoặc chèn ghi chú hình vẽ bằng \\begin{tikzpicture} ... \\end{tikzpicture} khi có thể.
-   - Giữ nguyên cấu trúc Câu 1, Câu 2, Bài 1, Bài 2, I, II, III.
+QUY TẮC CỐT LÕI:
+1. BỐ CỤC VĂN BẢN VÀ MINIPAGE:
+   - Nếu có hình vẽ/bảng biến thiên bên phải, sử dụng tỷ lệ chuẩn:
+     \\begin{minipage}[c]{0.58\\textwidth} ... \\end{minipage}%
+     \\hfill
+     \\begin{minipage}[c]{0.40\\textwidth} ... \\end{minipage}
+   - VĂN BẢN TỰ ĐỘNG DÀN DÒNG: Để LaTeX tự ngắt dòng tự nhiên, KHÔNG chèn ngắt dòng thủ công (\\\\) giữa câu văn. Viết liền các biểu thức ngắn như $y=f(x)$.
 
-Định dạng trả về:
-Trả về mã LaTeX sạch. Nếu người dùng chọn tạo toàn bộ tài liệu (Full Document), hãy bao bọc trong:
-\\documentclass[12pt,a4paper]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[vietnamese]{babel}
-\\usepackage{amsmath,amssymb,amsfonts,mathrsfs}
-\\usepackage{geometry}
-\\usepackage{graphicx,tikz}
-\\usepackage{enumitem}
-\\geometry{a4paper, top=2cm, bottom=2cm, left=2cm, right=2cm}
-\\begin{document}
-...
-\\end{document}
-Nếu người dùng chỉ cần công thức/đoạn trích (Snippet), chỉ trả về nội dung bên trong.`;
+2. QUY CHUẨN DỰNG BẢNG BIẾN THIÊN (Tránh co cụm, đè vạch):
+   - MỞ RỘNG CHIỀU NGANG: Mỗi khoảng giá trị (ví dụ từ -∞ đến số mốc, và từ mốc đến +∞) phải có chiều rộng tối thiểu 2.0cm - 2.5cm để bảng thoáng đãng.
+   - VẠCH ĐÔI KHÔNG XÁC ĐỊNH (||): Vẽ bằng 2 đường thẳng song song cách nhau 2pt, cách xa chữ số mốc ở hàng x và các ký tự -∞, +∞ ở hàng f(x) ít nhất 0.3cm (không để dính hoặc đè nét).
+   - MŨI TÊN BIẾN THIÊN: Vẽ nghiêng thoáng, điểm đầu và điểm cuối mũi tên có khoảng đệm (shorten >= 3pt, shorten <= 3pt) để không đè vào số 1 hay ký tự vô cùng.
+   - NÉT BẢNG: Đường kẻ ngang phân cách hàng x, f'(x), f(x) dùng nét \\draw[thick].
+
+3. QUY CHUẨN ĐỒ THỊ TIKZ:
+   - Trục Ox vẽ dài qua mốc cuối cùng 0.6 đơn vị (không để số đè vào chữ x mũi tên).
+   - Tên trục y (node[right] {$y$}) tách biệt hoàn toàn với tên hàm số (ví dụ $y=f'(x)$).
+   - Đồ thị vẽ bằng \\draw plot (\\x, {công thức giải tích}).
+
+4. ĐỊNH DẠNG ĐẦU RA:
+   - Chỉ xuất duy nhất mã LaTeX hoàn chỉnh trong khối \`\`\`latex ... \`\`\` (chứa đầy đủ các gói: babel vietnamese, amsmath, amssymb, tikz, geometry).`;
 
 /**
  * Gemini Vision API handler with Self-Healing Multi-Key & Multi-Model Instant Fallback
@@ -104,13 +89,7 @@ async function callGeminiVision(apiKeys, base64Image, mimeType, isFullDocument =
     'gemini-2.0-flash'
   ].filter((v, i, a) => v && a.indexOf(v) === i);
 
-  const promptText = `${SYSTEM_PROMPT}
-
-Yêu cầu cụ thể cho ảnh này:
-- Chế độ đầu ra: ${isFullDocument ? 'Tạo toàn bộ file tài liệu LaTeX hoàn chỉnh (Full Document có đầy đủ \\documentclass, packages, \\begin{document}...)' : 'Chỉ xuất phần thân LaTeX (Snippet/Body Only)'}
-${customNotes ? `- Lưu ý thêm từ người dùng: ${customNotes}` : ''}
-
-Hãy phân tích hình ảnh đính kèm và xuất mã LaTeX chính xác nhất. KHÔNG thêm giải thích dài dòng ở đầu hay cuối, chỉ xuất mã LaTeX.`;
+  const promptText = `${SYSTEM_PROMPT}${customNotes ? `\n\n- Lưu ý thêm từ người dùng: ${customNotes}` : ''}`;
 
   const payload = {
     contents: [
@@ -234,96 +213,6 @@ Hãy phân tích hình ảnh đính kèm và xuất mã LaTeX chính xác nhất
 }
 
 /**
- * Ollama Local Vision handler
- */
-async function callOllamaVision(ollamaUrl, model, base64Image, isFullDocument = true) {
-  const targetUrl = `${ollamaUrl.replace(/\/$/, '')}/api/generate`;
-  const prompt = `${SYSTEM_PROMPT}\nConvert this math image to clean LaTeX. Output format: ${isFullDocument ? 'Full LaTeX document' : 'Latex snippet only'}. Output only the LaTeX code.`;
-
-  const payload = {
-    model: model || 'llava',
-    prompt: prompt,
-    images: [base64Image],
-    stream: false
-  };
-
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    throw new Error(`Ollama Error (${response.status}): ${await response.text()}`);
-  }
-
-  const data = await response.json();
-  let cleanLatex = (data.response || '').trim();
-  if (cleanLatex.startsWith('```latex')) {
-    cleanLatex = cleanLatex.replace(/^```latex\s*/i, '').replace(/```\s*$/i, '');
-  } else if (cleanLatex.startsWith('```')) {
-    cleanLatex = cleanLatex.replace(/^```\s*/i, '').replace(/```\s*$/i, '');
-  }
-  return cleanLatex.trim();
-}
-
-/**
- * OpenAI / Custom Vision API handler
- */
-async function callCustomVision(apiUrl, apiKey, model, base64Image, mimeType, isFullDocument = true) {
-  const targetUrl = apiUrl || 'https://api.openai.com/v1/chat/completions';
-  const payload = {
-    model: model || 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: SYSTEM_PROMPT
-      },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Chuyển toàn bộ nội dung đề toán trong ảnh sang mã LaTeX. Định dạng: ${isFullDocument ? 'Full compilable Document' : 'Snippet Body'}. Chỉ trả về mã LaTeX.`
-          },
-          {
-            type: 'image_url',
-            image_url: {
-              url: `data:${mimeType || 'image/jpeg'};base64,${base64Image}`
-            }
-          }
-        ]
-      }
-    ],
-    temperature: 0.1
-  };
-
-  const headers = { 'Content-Type': 'application/json' };
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    throw new Error(`Vision API Error (${response.status}): ${await response.text()}`);
-  }
-
-  const data = await response.json();
-  let cleanLatex = data?.choices?.[0]?.message?.content || '';
-  if (cleanLatex.startsWith('```latex')) {
-    cleanLatex = cleanLatex.replace(/^```latex\s*/i, '').replace(/```\s*$/i, '');
-  } else if (cleanLatex.startsWith('```')) {
-    cleanLatex = cleanLatex.replace(/^```\s*/i, '').replace(/```\s*$/i, '');
-  }
-  return cleanLatex.trim();
-}
-
-/**
  * API Route: Convert Image / PDF to LaTeX (Dual path for Localhost & Vercel)
  */
 app.post(['/api/convert', '/convert'], upload.single('image'), async (req, res) => {
@@ -348,55 +237,38 @@ app.post(['/api/convert', '/convert'], upload.single('image'), async (req, res) 
       return res.status(400).json({ success: false, error: 'Vui lòng cung cấp hình ảnh hoặc tệp đề toán (Upload hoặc Base64)!' });
     }
 
-    const engine = req.body.engine || 'gemini';
     const isFullDocument = req.body.isFullDocument !== 'false' && req.body.isFullDocument !== false;
     const customNotes = req.body.customNotes || '';
 
-    let latexResult = '';
-    let switchedKey = false;
+    let candidateKeys = [];
+    if (req.body.apiKeys) {
+      if (Array.isArray(req.body.apiKeys)) {
+        candidateKeys.push(...req.body.apiKeys);
+      } else if (typeof req.body.apiKeys === 'string') {
+        candidateKeys.push(...req.body.apiKeys.split(/[,;\n]+/).map(k => k.trim()));
+      }
+    }
+    if (req.body.apiKey) candidateKeys.push(req.body.apiKey);
+    if (req.body.backupApiKey) candidateKeys.push(req.body.backupApiKey);
+    if (process.env.GEMINI_API_KEY) candidateKeys.push(process.env.GEMINI_API_KEY);
+    if (process.env.GEMINI_BACKUP_KEY) candidateKeys.push(process.env.GEMINI_BACKUP_KEY);
+
+    candidateKeys = candidateKeys.filter((v, i, a) => v && a.indexOf(v) === i);
+    const geminiModel = req.body.geminiModel || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+    if (candidateKeys.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Chưa có Gemini API Key! Hãy nhập API Key miễn phí từ Google AI Studio (aistudio.google.com) ở mục Cài đặt, hoặc cấu hình GEMINI_API_KEY trong file .env.'
+      });
+    }
+
+    const result = await callGeminiVision(candidateKeys, base64Image, mimeType, isFullDocument, customNotes, geminiModel);
+    const latexResult = result.latex;
+    const switchedKey = result.switchedKey;
     let fallbackNotice = null;
-
-    if (engine === 'gemini') {
-      let candidateKeys = [];
-      if (req.body.apiKeys) {
-        if (Array.isArray(req.body.apiKeys)) {
-          candidateKeys.push(...req.body.apiKeys);
-        } else if (typeof req.body.apiKeys === 'string') {
-          candidateKeys.push(...req.body.apiKeys.split(/[,;\n]+/).map(k => k.trim()));
-        }
-      }
-      if (req.body.apiKey) candidateKeys.push(req.body.apiKey);
-      if (req.body.backupApiKey) candidateKeys.push(req.body.backupApiKey);
-      if (process.env.GEMINI_API_KEY) candidateKeys.push(process.env.GEMINI_API_KEY);
-      if (process.env.GEMINI_BACKUP_KEY) candidateKeys.push(process.env.GEMINI_BACKUP_KEY);
-
-      candidateKeys = candidateKeys.filter((v, i, a) => v && a.indexOf(v) === i);
-      const geminiModel = req.body.geminiModel || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-
-      if (candidateKeys.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Chưa có Gemini API Key! Hãy nhập API Key miễn phí từ Google AI Studio (aistudio.google.com) ở mục Cài đặt, hoặc cấu hình GEMINI_API_KEY trong file .env.'
-        });
-      }
-
-      const result = await callGeminiVision(candidateKeys, base64Image, mimeType, isFullDocument, customNotes, geminiModel);
-      latexResult = result.latex;
-      switchedKey = result.switchedKey;
-      if (switchedKey) {
-        fallbackNotice = `Đã tự động chuyển sang API Key #${result.usedKeyIndex + 1} (${result.usedKeyPreview}) do Key trước bị giới hạn hạn ngạch (Rate Limit)!`;
-      }
-    } else if (engine === 'ollama') {
-      const ollamaUrl = req.body.ollamaUrl || 'http://localhost:11434';
-      const model = req.body.ollamaModel || 'llava';
-      latexResult = await callOllamaVision(ollamaUrl, model, base64Image, isFullDocument);
-    } else if (engine === 'custom') {
-      const apiUrl = req.body.customApiUrl;
-      const apiKey = req.body.apiKey || '';
-      const model = req.body.customModel || 'gpt-4o-mini';
-      latexResult = await callCustomVision(apiUrl, apiKey, model, base64Image, mimeType, isFullDocument);
-    } else {
-      return res.status(400).json({ success: false, error: `Engine "${engine}" không hợp lệ.` });
+    if (switchedKey) {
+      fallbackNotice = `Đã tự động chuyển sang API Key #${result.usedKeyIndex + 1} (${result.usedKeyPreview}) do Key trước bị giới hạn hạn ngạch (Rate Limit)!`;
     }
 
     return res.json({

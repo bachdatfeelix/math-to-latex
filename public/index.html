@@ -30,8 +30,6 @@
     }
   </script>
 
-  <!-- Tesseract.js -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -137,6 +135,7 @@
 
       <!-- Right toolbar -->
       <div class="flex items-center gap-2.5">
+
         <div class="hidden md:flex items-center dark:bg-board-800 bg-[#F5F3EF] border dark:border-chalk/10 border-[#E5E0D8] rounded-lg px-3 py-1.5 text-xs gap-2 focus-within:border-gold/50 transition-colors">
           <i class="fa-regular fa-file-code text-gold text-[11px]"></i>
           <span class="dark:text-chalk-dim text-[#6B6560] font-medium">Xuất:</span>
@@ -536,25 +535,7 @@
           <p class="text-[11px] dark:text-chalk-faint text-[#9B9590]">Khóa API được lưu an toàn trong trình duyệt của bạn (LocalStorage) và không gửi tới bất kỳ bên thứ ba nào.</p>
         </div>
 
-        <!-- Ollama Local -->
-        <div class="space-y-1.5 border-t dark:border-chalk/10 border-[#E5E0D8] pt-3">
-          <label for="ollamaUrlInput" class="font-semibold dark:text-chalk text-paper-ink flex items-center gap-1.5">
-            <i class="fa-solid fa-microchip text-gold"></i> Ollama Local Endpoint (Tuỳ chọn):
-          </label>
-          <input type="text" id="ollamaUrlInput" value="http://localhost:11434" class="field font-mono">
-          <div class="flex items-center gap-2 mt-1">
-            <label for="ollamaModelInput" class="dark:text-chalk-dim text-[#6B6560]">Tên Model Vision:</label>
-            <input type="text" id="ollamaModelInput" value="llava" class="flex-1 dark:bg-board-950 bg-[#F5F3EF] border dark:border-chalk/12 border-[#E5E0D8] rounded-lg px-2.5 py-1.5 dark:text-chalk text-paper-ink font-mono text-xs">
-          </div>
-        </div>
 
-        <!-- Custom API -->
-        <div class="space-y-1.5 border-t dark:border-chalk/10 border-[#E5E0D8] pt-3">
-          <label for="customApiUrlInput" class="font-semibold dark:text-chalk text-paper-ink flex items-center gap-1.5">
-            <i class="fa-solid fa-plug text-gold"></i> Custom OpenAI/DeepSeek API:
-          </label>
-          <input type="text" id="customApiUrlInput" placeholder="https://api.openai.com/v1/chat/completions" class="field font-mono">
-        </div>
 
       </div>
 

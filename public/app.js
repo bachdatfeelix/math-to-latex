@@ -135,9 +135,7 @@ function initElements() {
     geminiKeysContainer: document.getElementById('geminiKeysContainer'),
     addApiKeyBtn: document.getElementById('addApiKeyBtn'),
     geminiModelSelect: document.getElementById('geminiModelSelect'),
-    ollamaUrlInput: document.getElementById('ollamaUrlInput'),
-    ollamaModelInput: document.getElementById('ollamaModelInput'),
-    customApiUrlInput: document.getElementById('customApiUrlInput'),
+
 
     // Guide Modal
     openGuideBtn: document.getElementById('openGuideBtn'),
@@ -256,14 +254,7 @@ function loadSettings() {
   renderApiKeyInputs(keys);
 
   const savedModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-2.5-flash';
-  const savedOllamaUrl = localStorage.getItem('math2latex_ollama_url') || 'http://localhost:11434';
-  const savedOllamaModel = localStorage.getItem('math2latex_ollama_model') || 'llava';
-  const savedCustomUrl = localStorage.getItem('math2latex_custom_url') || '';
-
   if (el.geminiModelSelect) el.geminiModelSelect.value = savedModel;
-  if (el.ollamaUrlInput) el.ollamaUrlInput.value = savedOllamaUrl;
-  if (el.ollamaModelInput) el.ollamaModelInput.value = savedOllamaModel;
-  if (el.customApiUrlInput) el.customApiUrlInput.value = savedCustomUrl;
 }
 
 function renderApiKeyInputs(keysArray) {
@@ -365,17 +356,11 @@ function getSavedApiKeys() {
 function saveSettings() {
   const keys = getSavedApiKeys();
   const geminiModel = el.geminiModelSelect?.value || 'gemini-2.5-flash';
-  const ollamaUrl = el.ollamaUrlInput?.value.trim() || 'http://localhost:11434';
-  const ollamaModel = el.ollamaModelInput?.value.trim() || 'llava';
-  const customUrl = el.customApiUrlInput?.value.trim() || '';
 
   localStorage.setItem('math2latex_gemini_keys', JSON.stringify(keys));
   localStorage.setItem('math2latex_gemini_key', keys[0] || '');
   localStorage.setItem('math2latex_gemini_backup_key', keys[1] || '');
   localStorage.setItem('math2latex_gemini_model', geminiModel);
-  localStorage.setItem('math2latex_ollama_url', ollamaUrl);
-  localStorage.setItem('math2latex_ollama_model', ollamaModel);
-  localStorage.setItem('math2latex_custom_url', customUrl);
 
   updateApiStatusIndicator();
   el.settingsModal?.classList.add('hidden');
@@ -531,6 +516,8 @@ function setupEventListeners() {
     el.renderOutput.style.fontSize = `${state.fontSize}px`;
   });
   el.printPreviewBtn?.addEventListener('click', () => window.print());
+
+
 
   // Settings Modal Handlers
   el.openSettingsBtn?.addEventListener('click', () => el.settingsModal?.classList.remove('hidden'));
@@ -873,8 +860,6 @@ function startProgress(engine) {
 
   updateProgressUI(8, 'Đang tiền xử lý & tối ưu hóa tài liệu...', 1);
 
-  if (engine === 'tesseract') return;
-
   let currentPercent = 8;
   const stepMessages = [
     { threshold: 25, step: 1, text: 'Đang chuẩn bị trang tài liệu...' },
@@ -970,24 +955,17 @@ async function callConvertApi(base64Image, isFullDoc = true, customNotes = '') {
   }
   const primaryKey = keys[0] || legacyKey || '';
   const geminiModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-2.5-flash';
-  const ollamaUrl = localStorage.getItem('math2latex_ollama_url') || 'http://localhost:11434';
-  const ollamaModel = localStorage.getItem('math2latex_ollama_model') || 'llava';
-  const customApiUrl = localStorage.getItem('math2latex_custom_url') || '';
 
   const response = await fetch('/api/convert', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       imageBase64: base64Image,
-      engine: state.activeEngine,
       isFullDocument: isFullDoc,
       customNotes: customNotes,
       apiKey: primaryKey,
       apiKeys: keys,
-      geminiModel: geminiModel,
-      ollamaUrl: ollamaUrl,
-      ollamaModel: ollamaModel,
-      customApiUrl: customApiUrl
+      geminiModel: geminiModel
     })
   });
 
@@ -1013,18 +991,13 @@ async function handleConvert() {
   if (state.isConverting) return;
   state.isConverting = true;
   setConvertingState(true);
-  startProgress(state.activeEngine);
+  startProgress();
 
   const isFullDocument = el.docTypeSelect?.value === 'full';
   const customNotes = el.customNotes?.value.trim() || '';
 
   try {
-    let resultLatex = '';
-    if (state.activeEngine === 'tesseract') {
-      resultLatex = await runTesseractOCR(state.currentImageBase64, isFullDocument);
-    } else {
-      resultLatex = await callConvertApi(state.currentImageBase64, isFullDocument, customNotes);
-    }
+    const resultLatex = await callConvertApi(state.currentImageBase64, isFullDocument, customNotes);
 
     el.latexEditor.value = resultLatex;
     updateEditorStats();
@@ -1160,58 +1133,6 @@ ${bodyContent}
   }
 }
 
-// In-Browser Tesseract OCR (Offline Fallback)
-async function runTesseractOCR(base64Image, isFullDocument) {
-  showToast('Đang nhận diện bằng Tesseract Offline trong trình duyệt...', 'info');
-  updateProgressUI(15, 'Đang tải bộ ngôn ngữ Tesseract OCR...', 2);
-  
-  const worker = await Tesseract.createWorker('vie+eng', 1, {
-    logger: m => {
-      if (m.status === 'recognizing text') {
-        const p = Math.min(95, Math.max(15, Math.round(m.progress * 100)));
-        updateProgressUI(p, `Tesseract OCR: Đang quét ký tự ${p}%...`, 2);
-      }
-    }
-  });
-
-  updateProgressUI(50, 'Đang phân tích cấu trúc & biểu thức...', 2);
-  const ret = await worker.recognize(base64Image);
-  await worker.terminate();
-
-  updateProgressUI(85, 'Đang chuẩn hóa cú pháp toán LaTeX...', 3);
-  const rawText = ret.data.text || '';
-  
-  let processed = rawText
-    .replace(/Câu\s*(\d+)[:.]?/gi, '\n\\textbf{Câu $1.} ')
-    .replace(/Bài\s*(\d+)[:.]?/gi, '\n\\textbf{Bài $1.} ')
-    .replace(/([A-D])\s*[\.\)]\s*/g, '\\textbf{$1.} ')
-    .replace(/(\d+)\/(\d+)/g, '\\dfrac{$1}{$2}')
-    .replace(/sqrt\(([^)]+)\)/gi, '\\sqrt{$1}')
-    .replace(/int_([a-zA-Z0-9]+)\^([a-zA-Z0-9]+)/gi, '\\int_{$1}^{$2}')
-    .replace(/lim_([a-zA-Z0-9\s->]+)/gi, '\\lim_{$1}')
-    .replace(/<=/g, '\\le ')
-    .replace(/>=/g, '\\ge ')
-    .replace(/!=/g, '\\ne ')
-    .replace(/<=>/g, '\\Leftrightarrow ')
-    .replace(/=>/g, '\\Rightarrow ');
-
-  if (isFullDocument) {
-    return `\\documentclass[12pt,a4paper]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[vietnamese]{babel}
-\\usepackage{amsmath,amssymb,amsfonts}
-\\usepackage{geometry}
-\\geometry{a4paper, top=2cm, bottom=2cm, left=2cm, right=2cm}
-
-\\begin{document}
-
-${processed.trim()}
-
-\\end{document}`;
-  }
-
-  return processed.trim();
-}
 
 function setConvertingState(isLoading) {
   if (isLoading) {

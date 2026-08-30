@@ -6,11 +6,9 @@
 
 ## ✨ Tính năng nổi bật
 
-1. **Nhận diện Toán học thông minh & Đa chế độ (Multi-Engine)**:
-   - ⚡ **AI Vision (Google Gemini 2.0 Flash)**: Nhận diện chính xác 100% tiếng Việt, câu hỏi trắc nghiệm A/B/C/D, ma trận, tích phân, giới hạn, căn thức, bảng biến thiên và hình vẽ TikZ.
-   - 🛡️ **Offline In-Browser (Tesseract.js)**: Hoạt động 100% cục bộ trong trình duyệt, không cần Internet hay API key.
-   - 🦙 **Ollama Local Vision**: Hỗ trợ chạy các mô hình Vision mã nguồn mở tại chỗ (`llava`, `qwen2-vl`, `llama3.2-vision`).
-   - ⚙️ **Custom API**: Tương thích mọi endpoint OpenAI/vLLM.
+1. **Nhận diện Toán học thông minh (Google Gemini AI Vision)**:
+   - ⚡ **Google Gemini 2.5 Flash / 3.7 Flash**: Nhận diện chính xác 100% tiếng Việt, câu hỏi trắc nghiệm A/B/C/D, ma trận, tích phân, giới hạn, căn thức, bảng biến thiên và hình vẽ TikZ.
+   - 🔄 **Cơ chế Multi-Key Self-Healing**: Tự động chuyển đổi giữa các API Key dự phòng khi gặp giới hạn hạn ngạch (Rate Limit).
 
 2. **Công cụ xử lý ảnh chuyên sâu**:
    - ✂️ **Cắt vùng chọn (Cropper.js)**: Dễ dàng khoanh vùng 1 câu hỏi hoặc 1 công thức cụ thể trong đề thi nhiều trang.
@@ -50,4 +48,4 @@ Sau đó truy cập: [http://localhost:3000](http://localhost:3000)
 ## 🔑 Cấu hình API Key (Miễn phí 100%)
 - Bạn có thể lấy API Key miễn phí từ Google AI Studio tại: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 - Nhập API Key trực tiếp vào mục **"Cấu hình API"** trên giao diện web (được lưu an toàn trong máy bạn), hoặc điền vào file `.env` (`GEMINI_API_KEY=AIzaSy...`).
-- Nếu không muốn dùng API, bạn có thể chọn chế độ **"Offline In-Browser"** ở thanh trên cùng.
+- Hỗ trợ các model Vision hàng đầu: Gemini 2.5 Flash, Gemini 3.7 Flash, Gemini 1.5 Flash.
