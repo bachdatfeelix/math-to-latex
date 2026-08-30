@@ -274,7 +274,7 @@ app.post(['/api/convert', '/convert'], upload.single('image'), async (req, res) 
     return res.json({
       success: true,
       latex: latexResult,
-      engine: engine,
+      engine: 'gemini',
       switchedKey: switchedKey,
       fallbackNotice: fallbackNotice,
       timestamp: new Date().toISOString()
