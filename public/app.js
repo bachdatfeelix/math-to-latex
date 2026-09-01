@@ -826,30 +826,56 @@ function clearLoadedMedia() {
   el.convertBtn?.classList.remove('hidden');
   resetCropUI();
 
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
+  if (progressRAF) {
+    cancelAnimationFrame(progressRAF);
+    progressRAF = null;
   }
   el.progressContainer?.classList.add('hidden');
   el.progressContainer?.classList.remove('flex');
 }
 
 // ==========================================================================
-// Progress Bar Controller
+// Progress Bar Controller — Elapsed-time asymptotic curve
 // ==========================================================================
-let progressInterval = null;
+let progressRAF = null;
+let progressStartTime = 0;
 
-function startProgress(engine) {
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
+/**
+ * Asymptotic progress curve based on real elapsed time.
+ * Fast at first, slows logarithmically — never self-reaches 95%.
+ *   t = elapsed seconds
+ *   Curve: p = ceiling * (1 - e^(-t/tau))
+ *   ceiling=94, tau=12 → 5s≈30%  10s≈56%  15s≈71%  20s≈81%  30s≈88%  60s≈93%
+ */
+function calcProgress(elapsedSec) {
+  const ceiling = 94;
+  const tau = 12;
+  return ceiling * (1 - Math.exp(-elapsedSec / tau));
+}
+
+function getProgressPhase(percent) {
+  if (percent < 15) return { step: 1, text: 'Đang chuẩn bị & gửi dữ liệu tới AI...' };
+  if (percent < 35) return { step: 1, text: 'Đang tải ảnh lên Gemini Vision...' };
+  if (percent < 55) return { step: 2, text: 'AI đang phân tích hình ảnh & nhận diện ký hiệu toán...' };
+  if (percent < 72) return { step: 2, text: 'AI đang bóc tách công thức & cấu trúc đề...' };
+  if (percent < 85) return { step: 3, text: 'Đang biên dịch sang cú pháp LaTeX...' };
+  return { step: 3, text: 'Đang chờ AI hoàn tất biên dịch LaTeX...' };
+}
+
+function startProgress() {
+  if (progressRAF) {
+    cancelAnimationFrame(progressRAF);
+    progressRAF = null;
   }
+
+  progressStartTime = Date.now();
 
   el.progressContainer?.classList.remove('hidden');
   el.progressContainer?.classList.add('flex');
 
   if (el.progressBar) {
     el.progressBar.style.width = '0%';
+    el.progressBar.style.transition = 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
     el.progressBar.className = 'h-full rounded-full bg-gradient-to-r from-gold via-pen-400 to-gold transition-all duration-300 relative progress-bar-animated';
   }
 
@@ -857,35 +883,17 @@ function startProgress(engine) {
     el.progressIcon.className = 'fa-solid fa-circle-notch fa-spin text-gold text-sm';
   }
 
-  updateProgressUI(8, 'Đang tiền xử lý & tối ưu hóa tài liệu...', 1);
+  updateProgressUI(2, 'Đang chuẩn bị & gửi dữ liệu tới AI...', 1);
 
-  let currentPercent = 8;
-  const stepMessages = [
-    { threshold: 25, step: 1, text: 'Đang chuẩn bị trang tài liệu...' },
-    { threshold: 50, step: 2, text: 'Đang phân tích hình ảnh & bóc tách ký hiệu toán...' },
-    { threshold: 75, step: 3, text: 'Đang biên dịch cấu trúc đề thi & cú pháp LaTeX...' },
-    { threshold: 92, step: 3, text: 'Đang kiểm tra chuẩn cú pháp Overleaf/KaTeX...' }
-  ];
+  function tick() {
+    const elapsed = (Date.now() - progressStartTime) / 1000;
+    const percent = calcProgress(elapsed);
+    const phase = getProgressPhase(percent);
+    updateProgressUI(percent, phase.text, phase.step);
+    progressRAF = requestAnimationFrame(tick);
+  }
 
-  progressInterval = setInterval(() => {
-    if (currentPercent < 92) {
-      const increment = currentPercent < 30 ? Math.floor(Math.random() * 4) + 3 :
-                        currentPercent < 60 ? Math.floor(Math.random() * 3) + 2 :
-                        currentPercent < 80 ? Math.floor(Math.random() * 2) + 1 : 1;
-      currentPercent = Math.min(93, currentPercent + increment);
-
-      let currentMsg = 'Đang chuyển đổi mã LaTeX...';
-      let currentStep = 2;
-      for (const item of stepMessages) {
-        if (currentPercent <= item.threshold) {
-          currentMsg = item.text;
-          currentStep = item.step;
-          break;
-        }
-      }
-      updateProgressUI(currentPercent, currentMsg, currentStep);
-    }
-  }, 220);
+  progressRAF = requestAnimationFrame(tick);
 }
 
 function updateProgressUI(percent, statusText, stepNumber = 1) {
@@ -908,13 +916,15 @@ function updateProgressUI(percent, statusText, stepNumber = 1) {
 }
 
 function finishProgress(success = true, message = '') {
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
+  if (progressRAF) {
+    cancelAnimationFrame(progressRAF);
+    progressRAF = null;
   }
 
   if (success) {
-    updateProgressUI(100, message || 'Chuyển đổi hoàn tất 100%!', 4);
+    // Smooth ease-out transition to 100%
+    if (el.progressBar) el.progressBar.style.transition = 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+    updateProgressUI(100, message || 'Chuyển đổi hoàn tất!', 4);
     if (el.progressBar) el.progressBar.className = 'h-full rounded-full progress-success transition-all duration-300 relative';
     if (el.progressIcon) el.progressIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm';
     if (el.step4) {
