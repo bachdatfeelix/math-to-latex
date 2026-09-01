@@ -253,7 +253,7 @@ function loadSettings() {
 
   renderApiKeyInputs(keys);
 
-  const savedModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-2.5-flash';
+  const savedModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-3.7-flash';
   if (el.geminiModelSelect) el.geminiModelSelect.value = savedModel;
 }
 
@@ -355,7 +355,7 @@ function getSavedApiKeys() {
 
 function saveSettings() {
   const keys = getSavedApiKeys();
-  const geminiModel = el.geminiModelSelect?.value || 'gemini-2.5-flash';
+  const geminiModel = el.geminiModelSelect?.value || 'gemini-3.7-flash';
 
   localStorage.setItem('math2latex_gemini_keys', JSON.stringify(keys));
   localStorage.setItem('math2latex_gemini_key', keys[0] || '');
@@ -953,7 +953,7 @@ async function callConvertApi(base64Image, isFullDoc = true, customNotes = '') {
     keys.unshift(legacyKey);
   }
   const primaryKey = keys[0] || legacyKey || '';
-  const geminiModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-2.5-flash';
+  const geminiModel = localStorage.getItem('math2latex_gemini_model') || 'gemini-3.7-flash';
 
   const response = await fetch('/api/convert', {
     method: 'POST',
